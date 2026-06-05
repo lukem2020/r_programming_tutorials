@@ -39,8 +39,15 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
+# pkgdown site (keep docs/*.md for interview materials)
+docs/site/
+
+# renv library (lockfile is committed)
+renv/library/
+renv/staging/
+renv/python/
+renv/local/
+renv/cellar/
 
 # translation temp files
 po/*~

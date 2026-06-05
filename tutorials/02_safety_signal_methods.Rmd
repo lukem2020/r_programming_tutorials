@@ -1,0 +1,137 @@
+---
+title: "02 — Safety Signal Methods for MDR"
+output: rmarkdown::html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 8, fig.height = 5, message = FALSE, warning = FALSE)
+```
+
+## Learning objectives
+
+- Summarize **treatment-emergent adverse events (TEAEs)** by arm
+- Build **SOC/PT incidence tables** for safety review
+- Detect **lab shift patterns** (normal → abnormal)
+- Drill from population view to **patient profile**
+
+## Setup
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+source("../R/data_prep.R")
+source("../R/theme_clinical.R")
+
+if (!file.exists("../data/simulated/ADSL.rds")) {
+  source("../R/data_generation.R")
+}
+
+data <- load_study_data("../data/simulated")
+ADSL <- data$ADSL
+ADAE <- data$ADAE
+ADLB <- data$ADLB
+```
+
+## Method 1: TEAE counts by arm
+
+```{r}
+summarize_teae_by_arm(ADAE, ADSL)
+```
+
+## Method 2: Subject incidence (%) — primary safety signal table
+
+This is what medical reviewers scan first: **how many subjects** experienced each event, not just event counts.
+
+```{r}
+teae_table <- teae_incidence_by_arm(ADAE, ADSL)
+teae_table
+```
+
+```{r}
+ggplot(
+  teae_table %>% slice_head(n = 8, by = ARM),
+  aes(x = reorder(AEDECOD, pct), y = pct, fill = ARM)
+) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  coord_flip() +
+  scale_fill_manual(values = clinical_arm_colors) +
+  labs(
+    title = "Top Treatment-Emergent Adverse Events",
+    x = NULL,
+    y = "Subject incidence (%)"
+  ) +
+  theme_clinical()
+```
+
+## Method 3: Lab shift summaries
+
+CtQ factor: **laboratory monitoring integrity**. Shifts from normal at baseline to abnormal post-baseline warrant review.
+
+```{r}
+summarize_lab_shifts(ADLB, ADSL)
+```
+
+```{r}
+shift_plot_data <- summarize_lab_shifts(ADLB, ADSL) %>%
+  filter(shift_flag)
+
+ggplot(shift_plot_data, aes(x = PARAM, y = n, fill = ARM)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  scale_fill_manual(values = clinical_arm_colors) +
+  labs(
+    title = "Clinically Relevant Lab Shifts",
+    subtitle = "Normal at baseline → abnormal at latest visit",
+    x = NULL,
+    y = "Subjects"
+  ) +
+  theme_clinical()
+```
+
+## Method 4: Patient profile drill-down (MDR workflow)
+
+Population signal → individual subject investigation:
+
+```{r}
+example_patient <- ADSL$USUBJID[1]
+profile <- patient_profile(example_patient, ADSL, ADAE, ADLB)
+
+profile$demographics %>%
+  select(USUBJID, ARM, AGE, SEX, RACE, SAFFL)
+```
+
+```{r}
+profile$adverse_events %>%
+  select(AEDECOD, AESOC, AESEV, AESTDTC, TRTEMFL)
+```
+
+```{r}
+ggplot(
+  profile$labs,
+  aes(x = ADY, y = AVAL, color = PARAM)
+) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = paste("Lab trends —", example_patient),
+    x = "Study Day",
+    y = "Lab Value"
+  ) +
+  theme_clinical()
+```
+
+## RBQM / CtQ mapping
+
+| Dashboard view | CtQ factor | Why it matters |
+|----------------|------------|----------------|
+| TEAE incidence | Safety reporting | Detect emerging risk by arm |
+| Lab shifts | Endpoint / safety integrity | Catch hepatotoxicity patterns early |
+| Population filters | Eligibility / analysis population | Ensure correct denominator |
+| Patient profile | Traceability | Link aggregate signal to source subject |
+
+## What to say in the interview
+
+- "I start with **population-level TEAE incidence**, not raw event counts, because regulators and clinicians think in subjects-at-risk."
+- "Lab shift tables connect to **CtQ laboratory monitoring** — I flag normal-to-abnormal transitions for medical review."
+- "MDR is iterative: filter the safety population, spot a signal, then **drill to patient level** to validate before escalation."
+- "In a regulated setting, every view ties back to a documented **Medical Data Review Plan** and traceable code."
