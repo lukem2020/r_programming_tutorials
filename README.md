@@ -82,7 +82,8 @@ Full script: [docs/interview_guide.md](docs/interview_guide.md)
 ├── docs/
 │   ├── context_file.md          # Job description
 │   ├── interview_guide.md       # Demo script + Q&A
-│   └── methods_cheatsheet.md    # RBQM, CDISC, MDR glossary
+│   ├── methods_cheatsheet.md    # RBQM, CDISC, MDR glossary
+│   └── pipeline_overview.md     # End-to-end pipeline reference
 ├── R/
 │   ├── data_generation.R        # Synthetic CDISC-like data
 │   ├── data_prep.R              # Safety signal helper functions
@@ -105,6 +106,7 @@ Full script: [docs/interview_guide.md](docs/interview_guide.md)
 
 ## Interview prep
 
+- **End-to-end pipeline:** [docs/pipeline_overview.md](docs/pipeline_overview.md)
 - **Demo script & Q&A:** [docs/interview_guide.md](docs/interview_guide.md)
 - **One-page methods reference:** [docs/methods_cheatsheet.md](docs/methods_cheatsheet.md)
 - **Job context:** [docs/context_file.md](docs/context_file.md)
