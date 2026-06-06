@@ -82,14 +82,3 @@ CtQ factors → Risk assessment → Mitigation → Monitoring (KRIs/QTLs) → Co
 | Best for | Regulated standard templates | Custom UX, quick prototypes |
 | This repo | `app/app.R` | `app/app_shiny_fallback.R` |
 
-## Repo quick commands
-
-```bash
-Rscript scripts/setup_env.R       # first-time environment setup
-Rscript R/data_generation.R       # create synthetic ADaM data
-```
-
-```r
-shiny::runApp("app")                          # teal dashboard
-shiny::runApp("app/app_shiny_fallback.R")     # Shiny fallback
-```
