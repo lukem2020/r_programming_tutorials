@@ -86,16 +86,21 @@ teae_top_plot <- function(adae, adsl, cfg, top_n = cfg$display$top_n_ae) {
     mutate(AEDECOD = factor(.data$AEDECOD, levels = rev(top_terms)))
 
   ggplot(plot_df, aes(x = .data$AEDECOD, y = .data$pct, fill = .data$ARM)) +
-    geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-    coord_flip() +
+    geom_col(position = position_dodge(width = 0.78), width = 0.7) +
+    geom_text(aes(label = ifelse(.data$pct >= 2, sprintf("%.0f", .data$pct), "")),
+              position = position_dodge(width = 0.78), hjust = -0.25,
+              size = 3, colour = "#5b6770") +
+    coord_flip(clip = "off") +
     scale_fill_manual(values = arm_palette(cfg)) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.10))) +
     labs(
       title = sprintf("Top %d treatment-emergent adverse events by arm", top_n),
-      subtitle = "Subject incidence (%) - pharmaverse TLG AET02 / FDA ST&F TEAE",
+      subtitle = "Subject incidence (%) \u2013 pharmaverse TLG AET02 / FDA ST&F TEAE",
       x = NULL, y = "Subjects with event (%)", fill = "Arm",
       caption = "Treatment-emergent (TRTEMFL == 'Y'), safety population"
     ) +
-    theme_clinical()
+    theme_clinical() +
+    theme(panel.grid.major.y = element_blank())
 }
 
 # S5 table: SOC -> PT subject incidence, counts by arm.
