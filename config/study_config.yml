@@ -1,0 +1,130 @@
+# Study configuration - single source of truth for the MDR Safety Dashboard
+# Standards: CDISC ADaM IG, FDA Standard Safety Tables and Figures (ST&F) Integrated Guide (Aug 2022),
+# pharmaverse TLG Catalog (https://insightsengineering.github.io/tlg-catalog/stable/tlg-index.html)
+
+study:
+  id: CDISCPILOT01
+  title: "A Phase III Study of Xanomeline in Alzheimer's Disease"
+  drug: Xanomeline (transdermal patch)
+  indication: Mild to moderate Alzheimer's disease
+  phase: III
+  fda_stf_version: "Integrated Guide, Version Date August 2022"
+  tlg_catalog_ref: "https://insightsengineering.github.io/tlg-catalog/stable/tlg-index.html"
+  arms:
+    - Placebo
+    - Xanomeline Low Dose
+    - Xanomeline High Dose
+  n_subjects_enrolled: 306
+  n_subjects_safety: 254
+  safety_population_flag: SAFFL
+  exclude_arms: [Screen Failure]
+
+datasets:
+  ADSL:
+    description: Subject-level analysis dataset - one row per subject
+    path: data/adam/ADSL.rds
+    grain: subject
+    key_variables: [USUBJID, ARM, ARMCD, AGE, SEX, RACE, SAFFL, TRTSDT, TRTEDT, TRTDURD, EOSSTT]
+    ctq_factor: Analysis population integrity / eligibility
+    fda_stf_section: "General (Demographics, Disposition, Exposure)"
+
+  ADAE:
+    description: Adverse events - one row per event
+    path: data/adam/ADAE.rds
+    grain: event
+    # AEBODSYS is the ADaM SOC variable; ASTDT/ASTDY for ordering; arm via ARM (no TRTA in ADAE)
+    key_variables: [USUBJID, ARM, AEDECOD, AEBODSYS, AESEV, TRTEMFL, AESER, AEREL, ASTDT, ASTDY, AEOUT]
+    ctq_factor: Safety reporting accuracy
+    fda_stf_section: "Adverse Event Analyses"
+
+  ADLB:
+    description: Laboratory results - one row per test per visit
+    path: data/adam/ADLB.rds
+    grain: lab_visit
+    key_variables: [USUBJID, ARM, PARAM, PARAMCD, LBCAT, AVAL, BASE, CHG, ANRIND, BNRIND, ANRLO, ANRHI, ABLFL, AVISIT, AVISITN, ADY]
+    ctq_factor: Laboratory monitoring integrity
+    fda_stf_section: "Laboratory Analyses"
+
+analysis_population:
+  primary: "SAFFL == 'Y'"
+  arms_for_safety: [Placebo, Xanomeline Low Dose, Xanomeline High Dose]
+  join_key: USUBJID
+
+# Section -> FDA ST&F + pharmaverse TLG catalog mapping (codes verified against the TLG index)
+safety_review_sections:
+  - id: S1
+    title: Demographics and Baseline Characteristics
+    fda_stf: General
+    tlg_ref: DMT01
+    dataset: ADSL
+    shiny_tab: Demographics
+  - id: S2
+    title: Patient Disposition
+    fda_stf: General
+    tlg_ref: DST01
+    dataset: ADSL
+    shiny_tab: Demographics
+  - id: S3
+    title: Overview of Adverse Events (Safety Summary)
+    fda_stf: Adverse Event Analyses
+    tlg_ref: AET01
+    dataset: ADAE
+    shiny_tab: AE Overview
+  - id: S4
+    title: Serious Adverse Events
+    fda_stf: Adverse Event Analyses - Serious Adverse Events
+    tlg_ref: AET01 components + AEL03 listing
+    dataset: ADAE
+    shiny_tab: AE Overview
+  - id: S5
+    title: Treatment-Emergent AEs by SOC and PT
+    fda_stf: Adverse Event Analyses - Treatment-Emergent Adverse Events
+    tlg_ref: AET02
+    tlg_ref_severity: AET03
+    dataset: ADAE
+    shiny_tab: TEAE Table
+  - id: S6
+    title: Laboratory Central Tendency Over Time
+    fda_stf: Laboratory Analyses - Change Over Time From Baseline
+    tlg_ref: LBT01
+    tlg_ref_graph: LTG01
+    dataset: ADLB
+    shiny_tab: Lab Trends
+  - id: S7
+    title: Laboratory Abnormalities / Shift
+    fda_stf: Laboratory Analyses
+    tlg_ref: LBT04
+    dataset: ADLB
+    shiny_tab: Lab Shifts
+  - id: S8
+    title: Hepatic Safety / Hy's Law (eDISH)
+    fda_stf: Laboratory Analyses - DILI / Hy's Law
+    tlg_ref: LBT09 / LBT10 / LBT11
+    dataset: ADLB
+    shiny_tab: Hy's Law
+  - id: S9
+    title: Patient Profile Drill-Down
+    fda_stf: Adverse Event Analyses (narratives support)
+    tlg_ref: IPPG01
+    dataset: ADSL + ADAE + ADLB
+    shiny_tab: Patient Profile
+
+# Liver chemistry parameters + Hy's Law thresholds (FDA: max post-baseline values)
+hepatic_safety:
+  hys_law:
+    alt_param: "Alanine Aminotransferase (U/L)"
+    ast_param: "Aspartate Aminotransferase (U/L)"
+    bili_param: "Bilirubin (umol/L)"
+    alt_threshold_x_uln: 3
+    bili_threshold_x_uln: 2
+
+display:
+  arm_levels:
+    - Placebo
+    - Xanomeline Low Dose
+    - Xanomeline High Dose
+  arm_colors:
+    Placebo: "#6c757d"
+    Xanomeline Low Dose: "#4c9be8"
+    Xanomeline High Dose: "#e8694c"
+  top_n_ae: 10
