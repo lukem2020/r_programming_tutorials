@@ -27,11 +27,14 @@ ae_overview_table <- function(adae, adsl, cfg) {
       mutate(Category = label)
   }
 
+  # Causality in this study is coded NONE/POSSIBLE/PROBABLE/REMOTE (not Y/N);
+  # "related" = any assessment other than NONE.
   rows <- bind_rows(
     count_subjects(te, "Subjects with any TEAE"),
     count_subjects(filter(te, .data$AESER == "Y"), "Subjects with any serious TEAE"),
     count_subjects(filter(te, .data$AESEV == "SEVERE"), "Subjects with any severe TEAE"),
-    count_subjects(filter(te, .data$AEREL == "Y"), "Subjects with any related TEAE")
+    count_subjects(filter(te, !is.na(.data$AEREL), .data$AEREL != "NONE"),
+                   "Subjects with any related TEAE")
   )
   rows$Category <- factor(rows$Category, levels = unique(rows$Category))
 
