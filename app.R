@@ -23,7 +23,8 @@ suppressPackageStartupMessages({
   d
 })
 for (f in c("load_data.R", "theme_clinical.R", "demographics.R",
-            "ae_analysis.R", "lab_analysis.R", "patient_profile.R")) {
+            "ae_analysis.R", "lab_analysis.R", "patient_profile.R",
+            "tte_analysis.R")) {
   source(file.path(.root, "R", f))
 }
 
@@ -32,6 +33,7 @@ cfg     <- study$config
 ADSL    <- study$ADSL
 ADAE    <- study$ADAE
 ADLB    <- study$ADLB
+ADTTE   <- study$ADTTE
 LIVER   <- liver_params(cfg)
 SUBJECTS <- profile_subject_choices(ADSL, cfg)
 
@@ -134,6 +136,27 @@ ui <- fluidPage(
       br(),
       h4("Treatment-emergent adverse event timeline"),
       DTOutput("pp_ae")
+    ),
+
+    tabPanel(
+      "Time-to-Event",
+      br(),
+      div(class = "stf-note", section_label("S10")),
+      plotOutput("km_plot", height = "480px"),
+      div(
+        class = "stf-note",
+        style = "margin-top:8px;",
+        p(strong("Time to first application-site reaction by arm."),
+          " The patch arms separate early from placebo - a tolerability signal ",
+          "visualised as a Kaplan-Meier curve, with a log-rank test and median ",
+          "time-to-event. The event is derived into a CDISC ADTTE dataset, the ",
+          "same structure a statistical programmer would hand off."),
+        p(em("Event = first treatment-emergent application-site / skin AE; ",
+             "subjects with no event are censored at end of treatment (TRTDURD)."))
+      ),
+      br(),
+      h4("Median time to first dermatologic event (log-rank across arms)"),
+      DTOutput("km_median")
     )
   )
 )
@@ -172,6 +195,15 @@ server <- function(input, output, session) {
   output$pp_demo <- renderDT(dt(patient_demographics(ADSL, input$subject)))
   output$pp_ae   <- renderDT(dt(patient_ae_timeline(ADAE, input$subject)))
   output$pp_lab  <- renderPlot(patient_lab_plot(ADLB, cfg, input$subject))
+
+  output$km_plot   <- renderPlot({
+    validate(need(!is.null(ADTTE), "ADTTE not found - run programs/02_derive_adtte.R"))
+    km_plot(ADTTE, cfg)
+  })
+  output$km_median <- renderDT({
+    validate(need(!is.null(ADTTE), "ADTTE not found - run programs/02_derive_adtte.R"))
+    dt(km_median_table(ADTTE, cfg))
+  })
 }
 
 shinyApp(ui, server)

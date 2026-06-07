@@ -23,14 +23,21 @@ load_config <- function(root = find_project_root()) {
   yaml::read_yaml(file.path(root, "config", "study_config.yml"))
 }
 
-# Returns a list with config + the three ADaM datasets.
+# Returns a list with config + the ADaM datasets. ADTTE is loaded if present
+# (it is derived by programs/02_derive_adtte.R) and is NULL otherwise.
 load_study_data <- function(root = find_project_root(), cfg = load_config(root)) {
   rd <- function(p) readRDS(file.path(root, p))
+  adtte_path <- file.path(root, cfg$datasets$ADTTE$path)
   list(
     config = cfg,
     ADSL = rd(cfg$datasets$ADSL$path),
     ADAE = rd(cfg$datasets$ADAE$path),
-    ADLB = rd(cfg$datasets$ADLB$path)
+    ADLB = rd(cfg$datasets$ADLB$path),
+    ADTTE = if (!is.null(cfg$datasets$ADTTE) && file.exists(adtte_path)) {
+      readRDS(adtte_path)
+    } else {
+      NULL
+    }
   )
 }
 

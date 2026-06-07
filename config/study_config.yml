@@ -45,6 +45,15 @@ datasets:
     ctq_factor: Laboratory monitoring integrity
     fda_stf_section: "Laboratory Analyses"
 
+  ADTTE:
+    description: Time-to-event - one row per subject per TTE parameter (derived)
+    path: data/adam/ADTTE.rds
+    grain: subject_param
+    derived_by: programs/02_derive_adtte.R
+    key_variables: [USUBJID, ARM, PARAMCD, PARAM, AVAL, CNSR, STARTDT, EVNTDESC, CNSDTDSC]
+    ctq_factor: Safety reporting accuracy (tolerability)
+    fda_stf_section: "Adverse Event Analyses - time-to-event"
+
 analysis_population:
   primary: "SAFFL == 'Y'"
   arms_for_safety: [Placebo, Xanomeline Low Dose, Xanomeline High Dose]
@@ -108,6 +117,12 @@ safety_review_sections:
     tlg_ref: IPPG01
     dataset: ADSL + ADAE + ADLB
     shiny_tab: Patient Profile
+  - id: S10
+    title: Time to First Dermatologic Event (KM)
+    fda_stf: Adverse Event Analyses - time-to-event
+    tlg_ref: KMG01 + TTET01
+    dataset: ADTTE
+    shiny_tab: Time-to-Event
 
 # Liver chemistry parameters + Hy's Law thresholds (FDA: max post-baseline values)
 hepatic_safety:
@@ -117,6 +132,17 @@ hepatic_safety:
     bili_param: "Bilirubin (umol/L)"
     alt_threshold_x_uln: 3
     bili_threshold_x_uln: 2
+
+# Time-to-event endpoint definition (drives programs/02_derive_adtte.R + KM tab)
+time_to_event:
+  paramcd: TTDE
+  param: "Time to First Dermatologic Event (days)"
+  event_label: "First dermatologic adverse event"
+  # Dermatologic event = treatment-emergent AND (application-site PT OR skin SOC)
+  event_decod_prefix: "APPLICATION SITE"
+  event_soc: "SKIN AND SUBCUTANEOUS TISSUE DISORDERS"
+  censor_var: TRTDURD
+  censor_label: "End of treatment (no dermatologic event)"
 
 display:
   arm_levels:
