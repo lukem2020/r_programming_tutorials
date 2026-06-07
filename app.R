@@ -1,11 +1,3 @@
-# MDR Safety Dashboard - CDISCPILOT01
-# Structured to the FDA Standard Safety Tables and Figures (ST&F) Integrated Guide
-# and the pharmaverse TLG Catalog. Reads config/study_config.yml and data/adam/.
-#
-# Run locally:   shiny::runApp(".")
-# Deploy:        rsconnect::deployApp(appDir = ".",
-#                  appFiles = c("app.R", "R/", "config/", "data/adam/"))
-
 suppressPackageStartupMessages({
   library(shiny)
   library(DT)
