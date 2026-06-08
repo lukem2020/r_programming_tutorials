@@ -104,17 +104,6 @@ Teal provides pre-validated clinical modules (AE tables, KM plots, patient profi
 
 "If TEAE incidence for 'Alanine aminotransferase increased' is higher on Drug 10mg and lab shifts show normal-to-high ALT transitions, I'd filter to the safety population, confirm the signal across visits, drill into affected patients, and escalate per the MDRP — checking exposure, concomitant meds, and AE relationship flags."
 
-## Git walkthrough (2 minutes)
-
-Explain your repo as a **template pipeline**:
-
-```
-data/simulated/     ← study inputs (ADSL, ADAE, ADLB)
-R/                  ← generation + prep logic (QC here)
-app/                ← consumer-facing dashboard
-tutorials/          ← documented methods for training
-docs/               ← interview + methods reference
-```
 
 Say: "I'd use feature branches per study template update, PRs for peer review, and tagged releases for production deployments."
 
