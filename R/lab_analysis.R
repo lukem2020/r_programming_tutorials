@@ -7,41 +7,134 @@ suppressPackageStartupMessages({
   library(ggplot2)
 })
 
-# Liver chemistry parameter labels from config.
+# Hepatic panel for Hy's Law / eDISH (S8) — fixed trio from config.
 liver_params <- function(cfg) {
   hl <- cfg$hepatic_safety$hys_law
   c(ALT = hl$alt_param, AST = hl$ast_param, Bilirubin = hl$bili_param)
 }
 
+# Full ADLB catalogue: all PARAM values grouped by LBCAT for selectInput optgroups.
+lab_param_catalog <- function(adlb) {
+  # One entry per PARAMCD (ADLB may repeat PARAMCD under multiple LBCAT values).
+  catalog <- adlb %>%
+    filter(!is.na(.data$PARAM), nzchar(.data$PARAM), !is.na(.data$PARAMCD)) %>%
+    distinct(.data$PARAM, .data$PARAMCD, .data$LBCAT) %>%
+    mutate(category = dplyr::coalesce(.data$LBCAT, "UNCATEGORIZED")) %>%
+    arrange(.data$PARAMCD, is.na(.data$LBCAT)) %>%
+    distinct(.data$PARAMCD, .keep_all = TRUE) %>%
+    arrange(.data$category, .data$PARAM)
+
+  label <- sprintf("%s (%s)", catalog$PARAM, catalog$PARAMCD)
+  by_category <- split(setNames(catalog$PARAM, label), catalog$category)
+
+  shift_ok <- adlb %>%
+    filter(grepl("^Week", .data$AVISIT),
+           !is.na(.data$BNRIND), !is.na(.data$ANRIND),
+           is.na(.data$ABLFL) | .data$ABLFL != "Y") %>%
+    distinct(.data$PARAM) %>%
+    pull(.data$PARAM)
+
+  shift_by_category <- lapply(by_category, function(g) {
+    g[unname(g) %in% shift_ok]
+  })
+  shift_by_category <- shift_by_category[lengths(shift_by_category) > 0]
+
+  list(
+    by_category = by_category,
+    shift_by_category = shift_by_category,
+    default_param = catalog$PARAM[catalog$PARAMCD == "ALT"][1]
+  )
+}
+
+default_lab_param <- function(cfg, catalog) {
+  alt <- cfg$hepatic_safety$hys_law$alt_param
+  if (!is.null(catalog$default_param) && alt %in% unlist(catalog$by_category)) alt
+  else unlist(catalog$by_category)[[1]]
+}
+
 # S6: mean (+/- SD) by arm over scheduled visits for a chosen parameter.
-lab_central_tendency <- function(adlb, cfg, param) {
+lab_central_tendency <- function(adlb, cfg, param, arms = NULL) {
   adlb %>%
     with_arm_factor(cfg) %>%
+    filter_by_arms(., cfg, arms) %>%
     filter(!is.na(.data$ARM), .data$PARAM == param,
            grepl("^Baseline$|^Week", .data$AVISIT), !is.na(.data$AVAL)) %>%
+    mean_by_visit(., c("USUBJID", "ARM", "AVISIT", "AVISITN"), "AVAL") %>%
     group_by(.data$ARM, .data$AVISIT, .data$AVISITN) %>%
     summarise(mean = mean(.data$AVAL), sd = sd(.data$AVAL), n = dplyr::n(), .groups = "drop") %>%
     arrange(.data$AVISITN)
 }
 
-lab_central_tendency_plot <- function(adlb, cfg, param) {
-  df <- lab_central_tendency(adlb, cfg, param)
+# S6 (change): mean CHG from baseline over visits.
+lab_change_from_baseline <- function(adlb, cfg, param, arms = NULL) {
+  adlb %>%
+    with_arm_factor(cfg) %>%
+    filter_by_arms(., cfg, arms) %>%
+    filter(!is.na(.data$ARM), .data$PARAM == param,
+           grepl("^Week", .data$AVISIT), !is.na(.data$CHG)) %>%
+    mean_by_visit(., c("USUBJID", "ARM", "AVISIT", "AVISITN"), "CHG") %>%
+    group_by(.data$ARM, .data$AVISIT, .data$AVISITN) %>%
+    summarise(mean = mean(.data$CHG), sd = sd(.data$CHG), n = dplyr::n(), .groups = "drop") %>%
+    arrange(.data$AVISITN)
+}
+
+lab_change_from_baseline_plot <- function(adlb, cfg, param, arms = NULL) {
+  df_all <- lab_change_from_baseline(adlb, cfg, param, arms)
+  if (nrow(df_all) == 0) {
+    return(
+      ggplot() +
+        annotate("text", x = 1, y = 1,
+                 label = "No change-from-baseline data for this parameter") +
+        theme_void()
+    )
+  }
+  df_fit <- lm_fit_data(df_all, y_var = "mean", group_vars = "ARM")
+  dodge <- position_dodge(width = 0.35)
+  ggplot(df_all, aes(x = .data$AVISITN, y = .data$mean, colour = .data$ARM, group = .data$ARM)) +
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+    geom_errorbar(aes(ymin = .data$mean - .data$sd, ymax = .data$mean + .data$sd),
+                  width = 0.18, linewidth = 0.5, alpha = 0.55, position = dodge) +
+    geom_point(size = 2.4, position = dodge) +
+    geom_lm_trend(data = df_fit, position = dodge) +
+    scale_colour_manual(values = arm_palette(cfg)) +
+    visit_axis_scale(df_all) +
+    labs(
+      title = paste0("Mean change from baseline — ", param),
+      subtitle = "All scheduled visits shown; linear fit excludes statistical outliers",
+      x = "Analysis visit", y = "Mean change from baseline", colour = "Arm",
+      caption = "Points = all scheduled visits; regression uses non-outlier visits only (IQR + studentized residuals)"
+    ) +
+    theme_clinical() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+lab_central_tendency_plot <- function(adlb, cfg, param, arms = NULL) {
+  df_all <- lab_central_tendency(adlb, cfg, param, arms)
+  if (nrow(df_all) == 0) {
+    return(
+      ggplot() +
+        annotate("text", x = 1, y = 1,
+                 label = "No numeric lab data for this parameter at scheduled visits") +
+        theme_void()
+    )
+  }
   uln <- adlb %>% filter(.data$PARAM == param, !is.na(.data$ANRHI)) %>%
     summarise(u = stats::median(.data$ANRHI)) %>% pull(.data$u)
 
+  df_fit <- lm_fit_data(df_all, y_var = "mean", group_vars = "ARM")
   dodge <- position_dodge(width = 0.35)
-  p <- ggplot(df, aes(x = stats::reorder(.data$AVISIT, .data$AVISITN),
-                      y = .data$mean, colour = .data$ARM, group = .data$ARM)) +
+  p <- ggplot(df_all, aes(x = .data$AVISITN, y = .data$mean, colour = .data$ARM, group = .data$ARM)) +
     geom_errorbar(aes(ymin = .data$mean - .data$sd, ymax = .data$mean + .data$sd),
                   width = 0.18, linewidth = 0.5, alpha = 0.55, position = dodge) +
-    geom_line(linewidth = 0.9, position = dodge) +
     geom_point(size = 2.4, position = dodge) +
+    geom_lm_trend(data = df_fit, position = dodge) +
     scale_colour_manual(values = arm_palette(cfg)) +
+    visit_axis_scale(df_all) +
     labs(
       title = paste0("Mean ", param, " over time by arm"),
-      subtitle = "Laboratory central tendency (mean \u00b1 SD) \u2013 pharmaverse TLG LBT01 / LTG01",
+      subtitle = "All scheduled visits shown; linear fit excludes statistical outliers",
       x = "Analysis visit", y = paste0("Mean ", param), colour = "Arm",
-      caption = "Error bars = \u00b1 1 SD; dashed line = upper limit of normal (ULN)"
+      caption = "Points = all scheduled visits; regression uses non-outlier visits only; dashed line = ULN"
     ) +
     theme_clinical() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -56,12 +149,13 @@ lab_central_tendency_plot <- function(adlb, cfg, param) {
 
 # S7: shift table - baseline (BNRIND) vs worst post-baseline (ANRIND) per subject.
 # Severity rank: NORMAL < LOW < HIGH; "worst" = highest rank observed post-baseline.
-lab_shift_table <- function(adlb, cfg, param) {
+lab_shift_table <- function(adlb, cfg, param, arms = NULL) {
   worst_rank <- c(NORMAL = 0L, LOW = 1L, HIGH = 2L)
   rank_name <- names(worst_rank)
 
-  adlb %>%
+  out <- adlb %>%
     with_arm_factor(cfg) %>%
+    filter_by_arms(., cfg, arms) %>%
     filter(!is.na(.data$ARM), .data$PARAM == param,
            (is.na(.data$ABLFL) | .data$ABLFL != "Y"),
            grepl("^Week", .data$AVISIT),
@@ -77,6 +171,11 @@ lab_shift_table <- function(adlb, cfg, param) {
     count(.data$ARM, .data$Shift, name = "n") %>%
     pivot_wider(names_from = "ARM", values_from = "n", values_fill = 0) %>%
     arrange(.data$Shift)
+
+  if (nrow(out) == 0) {
+    return(data.frame(Note = "No shift data (BNRIND/ANRIND) for this parameter"))
+  }
+  out
 }
 
 # S8: per-subject max post-baseline ALT/ULN and Bilirubin/ULN for the eDISH scatter.

@@ -1,6 +1,6 @@
 # Methods Cheatsheet — Clinical Visual Analytics
 
-One-page reference for interview concept questions.
+One-page reference for interview concept questions. Full demo script and S1–S10 analysis catalogue: [interview_guide.md](interview_guide.md).
 
 ## RBQM loop
 
@@ -37,8 +37,29 @@ CtQ factors → Risk assessment → Mitigation → Monitoring (KRIs/QTLs) → Co
 | **ADSL** | 1 row / subject | `USUBJID`, `ARM`, `AGE`, `SEX`, `RACE`, `SAFFL`, `ITTFL` |
 | **ADAE** | 1 row / event | `AEDECOD`, `AESOC`, `AESEV`, `TRTEMFL`, `AESTDTC`, `AEREL` |
 | **ADLB** | 1 row / lab / visit | `PARAM`, `AVAL`, `CHG`, `ANRIND`, `ABLFL`, `AVISIT`, `ADY` |
+| **ADEX** | 1 row / exposure record | `EXDOSE`, `EXDURD`, `EXROUTE`, `EXSTDY` |
+| **ADVS** | 1 row / vital / visit | `PARAM`, `AVAL`, `CHG`, `AVISIT`, `AVISITN` |
+| **ADCM** | 1 row / medication | `CMTRT`, `CMDECOD`, `ONTRTFL`, `ASTDY` |
+| **ADMH** | 1 row / history term | `MHTERM`, `MHBODSYS`, `MHSTDY` |
 
 **Join key:** `USUBJID` (always start from `ADSL`)
+
+## Industry conventions for MDR safety analyses
+
+What medical reviewers expect in pharma/biotech — and how this repo implements them:
+
+| Analysis | Industry rule | This repo |
+|----------|---------------|-----------|
+| Analysis population | Define flag in SAP/MDRP (e.g. `SAFFL == "Y"`) before any table | `safety_adsl()` in `R/load_data.R` |
+| TEAE | `TRTEMFL == "Y"` per ADaM IG | `.teae()` in `R/ae_analysis.R` |
+| AE tables | Subject incidence n/N (%), not event counts | `distinct(USUBJID)` in overview and SOC/PT tables |
+| MedDRA display | SOC → PT hierarchy | `AEBODSYS` → `AEDECOD` in `soc_pt_table()` |
+| SAE review | Patient-level listing with PT, severity, outcome | `sae_listing()` — AEL03-style |
+| Lab catalogue | All ADLB `PARAMCD` values grouped by `LBCAT` for selectors | `lab_param_catalog()` — S6/S7/S9 |
+| Lab shifts | Baseline normal indicator → worst post-baseline | `lab_shift_table()` — LBT04 |
+| DILI screen | Max post-baseline ALT and bilirubin vs ULN; Hy's Law zone | `hys_law_plot()` — eDISH |
+| Drill-down | Link aggregate signal to one subject | Patient Profile tab — IPPG01 |
+| Standards | FDA ST&F Integrated Guide; pharmaverse TLG catalog | Mapped in `config/study_config.yml` |
 
 ## Safety signal methods
 
@@ -47,7 +68,7 @@ CtQ factors → Risk assessment → Mitigation → Monitoring (KRIs/QTLs) → Co
 | TEAE filter | `TRTEMFL == "Y"` | Post-treatment events only |
 | Event count | `n()` per `ARM` × `AEDECOD` | Volume comparison |
 | Subject incidence | `n_distinct(USUBJID)` / `n subjects in arm` | Primary safety table |
-| Lab shift | baseline `ANRIND` → latest post-baseline `ANRIND` | Hepatotoxicity / renal monitoring |
+| Lab shift | baseline `BNRIND` → worst post-baseline `ANRIND` | Hepatotoxicity / renal monitoring (FDA LBT04) |
 | Patient profile | filter all datasets to one `USUBJID` | MDR drill-down |
 
 ## Clinical terminology
@@ -79,6 +100,6 @@ CtQ factors → Risk assessment → Mitigation → Monitoring (KRIs/QTLs) → Co
 | Clinical modules | Built-in (AE, KM, profiles) | Build yourself |
 | CDISC joins | `cdisc_data()` handles keys | Manual joins |
 | Cross-tab filters | Shared filter panel | Custom `reactive()` per tab |
-| Best for | Regulated standard templates | Custom UX, quick prototypes |
-| This repo | `app/app.R` | `app/app_shiny_fallback.R` |
+| Best for | Regulated standard templates | Custom UX, explicit analysis logic |
+| This repo | teal (production option) | [`app.R`](../app.R) + [`R/`](../R/) helpers |
 

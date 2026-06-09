@@ -3,18 +3,15 @@
 
 library(pharmaverseadam)
 
-data(adsl)
-data(adae)
-data(adlb)
-
+domains <- c("adsl", "adae", "adlb", "adex", "advs", "adcm", "admh")
 dir.create(file.path("data", "adam"), recursive = TRUE, showWarnings = FALSE)
 
-saveRDS(adsl, file.path("data", "adam", "ADSL.rds"))
-saveRDS(adae, file.path("data", "adam", "ADAE.rds"))
-saveRDS(adlb, file.path("data", "adam", "ADLB.rds"))
+for (d in domains) {
+  data(list = d, package = "pharmaverseadam")
+  x <- get(d)
+  out <- file.path("data", "adam", paste0(toupper(d), ".rds"))
+  saveRDS(x, out)
+  cat(" Saved", toupper(d), ":", nrow(x), "rows ->", out, "\n")
+}
 
-cat("Saved:\n")
-cat(" ADSL:", nrow(adsl), "rows\n")
-cat(" ADAE:", nrow(adae), "rows\n")
-cat(" ADLB:", nrow(adlb), "rows\n")
-cat("Location: data/adam/\n")
+cat("\nNext: Rscript programs/02_derive_adtte.R\n")
