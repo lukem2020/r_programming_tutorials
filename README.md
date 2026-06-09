@@ -112,13 +112,18 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:7900/
 Rscript programs/03_smoke_test.R
 ```
 
-### Deploy
+### Deploy (shinyapps.io)
 
 ```bash
-# Public demo link (shinyapps.io) - configure rsconnect once, then:
-Rscript -e 'rsconnect::deployApp(appDir = ".", \
-  appFiles = c("app.R", "R/", "config/", "data/adam/"))'
+# 1. Copy the template and add your account / token / secret
+cp config/deploy.example.yml config/deploy.yml
+# Edit config/deploy.yml (file is gitignored — do not commit secrets)
+
+# 2. Deploy using credentials from config/deploy.yml
+Rscript deploy_app.R
 ```
+
+Public URL: `https://<account>.shinyapps.io/<app_name>/`
 
 ### Inspect the data (Python notebook)
 

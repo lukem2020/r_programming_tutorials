@@ -55,5 +55,8 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# shinyapps.io deploy credentials (use config/deploy.example.yml as template)
+config/deploy.yml
+
 renv/
 .venv/
