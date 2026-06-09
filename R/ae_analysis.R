@@ -8,17 +8,23 @@ suppressPackageStartupMessages({
 })
 
 # Treatment-emergent AEs restricted to the safety population, ARM as ordered factor.
-.teae <- function(adae, adsl, cfg) {
-  safe_ids <- safety_adsl(adsl, cfg)$USUBJID
+.teae <- function(adae, adsl, cfg, arms = NULL) {
+  safe_ids <- safety_subject_ids(adsl, cfg, arms)
   adae %>%
     filter(.data$TRTEMFL == "Y", .data$USUBJID %in% safe_ids) %>%
-    mutate(ARM = factor(.data$ARM, levels = arm_levels(cfg)))
+    mutate(ARM = factor(.data$ARM, levels = arm_levels(cfg))) %>%
+    filter_by_arms(., cfg, arms)
 }
 
+# Severity rank for AET03 worst-grade logic.
+.sev_rank <- c(MILD = 1L, MODERATE = 2L, SEVERE = 3L)
+
 # S3 + S4: FDA-style overview of adverse events (subject counts and %).
-ae_overview_table <- function(adae, adsl, cfg) {
-  denom <- safety_adsl(adsl, cfg) %>% count(.data$ARM, name = "den")
-  te <- .teae(adae, adsl, cfg)
+ae_overview_table <- function(adae, adsl, cfg, arms = NULL) {
+  denom <- safety_adsl(adsl, cfg) %>%
+    filter_by_arms(., cfg, arms) %>%
+    count(.data$ARM, name = "den")
+  te <- .teae(adae, adsl, cfg, arms)
 
   count_subjects <- function(df, label) {
     df %>%
@@ -48,8 +54,8 @@ ae_overview_table <- function(adae, adsl, cfg) {
 }
 
 # S4: serious adverse event listing (AEL03 style).
-sae_listing <- function(adae, adsl, cfg) {
-  .teae(adae, adsl, cfg) %>%
+sae_listing <- function(adae, adsl, cfg, arms = NULL) {
+  .teae(adae, adsl, cfg, arms) %>%
     filter(.data$AESER == "Y") %>%
     transmute(
       USUBJID = .data$USUBJID,
@@ -63,23 +69,30 @@ sae_listing <- function(adae, adsl, cfg) {
 }
 
 # S5: subject incidence (%) per arm per preferred term.
-teae_incidence <- function(adae, adsl, cfg) {
-  denom <- safety_adsl(adsl, cfg) %>% count(.data$ARM, name = "den")
-  .teae(adae, adsl, cfg) %>%
+teae_incidence <- function(adae, adsl, cfg, arms = NULL) {
+  denom <- safety_adsl(adsl, cfg) %>%
+    filter_by_arms(., cfg, arms) %>%
+    count(.data$ARM, name = "den")
+  .teae(adae, adsl, cfg, arms) %>%
     distinct(.data$ARM, .data$USUBJID, .data$AEDECOD) %>%
     count(.data$ARM, .data$AEDECOD, name = "n") %>%
     left_join(denom, by = "ARM") %>%
     mutate(pct = 100 * .data$n / .data$den)
 }
 
-# S5 bar chart: top-N preferred terms by overall incidence, plotted by arm.
-teae_top_plot <- function(adae, adsl, cfg, top_n = cfg$display$top_n_ae) {
-  inc <- teae_incidence(adae, adsl, cfg)
-  top_terms <- inc %>%
+# S5: top-N preferred terms by overall subject incidence (same ranking as TEAE bar chart).
+teae_top_terms <- function(adae, adsl, cfg, top_n = cfg$display$top_n_ae, arms = NULL) {
+  teae_incidence(adae, adsl, cfg, arms) %>%
     group_by(.data$AEDECOD) %>%
     summarise(total = sum(.data$n), .groups = "drop") %>%
     slice_max(.data$total, n = top_n, with_ties = FALSE) %>%
     pull(.data$AEDECOD)
+}
+
+# S5 bar chart: top-N preferred terms by overall incidence, plotted by arm.
+teae_top_plot <- function(adae, adsl, cfg, top_n = cfg$display$top_n_ae, arms = NULL) {
+  inc <- teae_incidence(adae, adsl, cfg, arms)
+  top_terms <- teae_top_terms(adae, adsl, cfg, top_n, arms)
 
   plot_df <- inc %>%
     filter(.data$AEDECOD %in% top_terms) %>%
@@ -104,11 +117,46 @@ teae_top_plot <- function(adae, adsl, cfg, top_n = cfg$display$top_n_ae) {
 }
 
 # S5 table: SOC -> PT subject incidence, counts by arm.
-soc_pt_table <- function(adae, adsl, cfg) {
-  .teae(adae, adsl, cfg) %>%
+soc_pt_table <- function(adae, adsl, cfg, arms = NULL) {
+  .teae(adae, adsl, cfg, arms) %>%
     distinct(.data$ARM, .data$USUBJID, .data$AEBODSYS, .data$AEDECOD) %>%
     count(.data$ARM, .data$AEBODSYS, .data$AEDECOD, name = "n") %>%
     pivot_wider(names_from = "ARM", values_from = "n", values_fill = 0) %>%
     arrange(.data$AEBODSYS, .data$AEDECOD) %>%
     rename(`System Organ Class` = "AEBODSYS", `Preferred Term` = "AEDECOD")
+}
+
+# S5b: TEAE by SOC, PT and worst severity per subject (AET03 / tm_t_events_by_grade).
+teae_severity_table <- function(adae, adsl, cfg, arms = NULL) {
+  denom <- safety_adsl(adsl, cfg) %>%
+    filter_by_arms(., cfg, arms) %>%
+    count(.data$ARM, name = "den")
+
+  worst <- .teae(adae, adsl, cfg, arms) %>%
+    filter(!is.na(.data$AESEV), .data$AESEV %in% names(.sev_rank)) %>%
+    mutate(sev_rk = .sev_rank[.data$AESEV]) %>%
+    group_by(.data$ARM, .data$USUBJID, .data$AEBODSYS, .data$AEDECOD) %>%
+    summarise(worst_sev = names(.sev_rank)[max(.data$sev_rk, na.rm = TRUE)],
+              .groups = "drop")
+
+  sev_levels <- names(.sev_rank)
+  arms_present <- intersect(arm_levels(cfg), unique(as.character(worst$ARM)))
+
+  rows <- worst %>%
+    distinct(.data$ARM, .data$AEBODSYS, .data$AEDECOD, .data$worst_sev) %>%
+    count(.data$ARM, .data$AEBODSYS, .data$AEDECOD, .data$worst_sev, name = "n") %>%
+    left_join(denom, by = "ARM") %>%
+    mutate(Value = sprintf("%d (%.1f%%)", .data$n, 100 * .data$n / .data$den)) %>%
+    select("ARM", "AEBODSYS", "AEDECOD", "worst_sev", "Value")
+
+  out <- rows %>%
+    pivot_wider(
+      names_from = c("ARM", "worst_sev"),
+      values_from = "Value",
+      values_fill = "0 (0.0%)"
+    ) %>%
+    arrange(.data$AEBODSYS, .data$AEDECOD) %>%
+    rename(`System Organ Class` = "AEBODSYS", `Preferred Term` = "AEDECOD")
+
+  out
 }

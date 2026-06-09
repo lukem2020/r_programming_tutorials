@@ -41,10 +41,13 @@ skin patch, **tolerability at the application site** is a primary safety questio
 | Domain | What we look at | Data |
 |---|---|---|
 | Demographics & disposition | Who was treated and how they exited the study | ADSL |
-| Adverse events | TEAE incidence, serious AEs, by SOC / preferred term | ADAE |
-| Application-site / skin reactions | The patch tolerability signal (incidence + time-to-event) | ADAE / ADTTE |
-| Laboratory safety | Liver chemistry central tendency, shifts, Hy's Law / eDISH | ADLB |
-| Patient drill-down | Individual subject profile linking signals to a person | ADSL + ADAE + ADLB |
+| Treatment exposure | Duration summary (`TRTDURD`) and record-level exposure | ADSL + ADEX |
+| Adverse events | TEAE overview, SAE listing, SOC/PT, severity (AET03) | ADAE |
+| Application-site / skin reactions | Patch tolerability (incidence + Kaplan-Meier) | ADAE / ADTTE |
+| Laboratory safety | Central tendency (AVAL/CHG), shifts, Hy's Law / eDISH | ADLB |
+| Vital signs | Central tendency over visits | ADVS |
+| Concomitant medications | On-treatment CM summary and listing | ADCM |
+| Patient drill-down | Demographics, AEs, labs, vitals, CM, medical history | ADSL + ADAE + ADLB + ADVS + ADCM + ADMH |
 
 **Headline finding:** the Xanomeline patch arms show a clear, early excess of
 **application-site / dermatologic reactions** versus placebo (visualised as a
@@ -79,11 +82,15 @@ Rscript -e 'renv::snapshot(prompt = FALSE)'
 ### Prepare data (ADaM)
 
 ```bash
-# 1. Build ADSL / ADAE / ADLB into data/adam/ (from pharmaverseadam)
+# 1. Build ADaM domains into data/adam/ (from pharmaverseadam)
 Rscript programs/01_prepare_adam.R
 
-# 2. Derive the time-to-event dataset ADTTE (Time to First Dermatologic Event)
+# 2. Derive ADTTE (Time to First Dermatologic Event)
 Rscript programs/02_derive_adtte.R
+
+# Optional: verify datasets and smoke-test helpers
+Rscript programs/00_verify_adam.R
+Rscript programs/03_smoke_test.R
 ```
 
 ### Run the app
@@ -102,9 +109,7 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:7900/
 ### Smoke-test the analysis helpers (no app)
 
 ```bash
-# Source every helper and confirm each function/plot builds against the data
-Rscript -e 'invisible(lapply(list.files("R", full.names = TRUE), source)); \
-  st <- load_study_data("."); cat("ADaM loaded OK; ADTTE rows:", nrow(st$ADTTE), "\n")'
+Rscript programs/03_smoke_test.R
 ```
 
 ### Deploy

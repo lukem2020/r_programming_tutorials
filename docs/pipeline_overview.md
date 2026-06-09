@@ -1,12 +1,12 @@
 # Clinical Trial Data Pipeline: From Collection to Medical Review
 
-**Study ABC123 — Reference Architecture**
+**CDISCPILOT01 — Reference Architecture**
 
 | | |
 |---|---|
 | **Purpose** | Describe the end-to-end clinical trial data pipeline from site collection through standardized datasets, visual analytics, and medical data review. |
 | **Audience** | Biometrics, data management, and visual analytics professionals; interview preparation for MDR dashboard roles. |
-| **Scope** | Early-phase interventional trials using CDISC standards, RBQM principles, and interactive Shiny/teal dashboards. Excludes submission packaging (eCTD) and post-marketing surveillance. |
+| **Scope** | Early-phase interventional trials using CDISC standards, RBQM principles, and interactive Shiny dashboards replicating teal.modules.clinical safety outputs. Excludes submission packaging (eCTD) and post-marketing surveillance. |
 
 ## Executive Summary
 
@@ -278,17 +278,19 @@ The Real-time Visual Analytics Specialist delivers Stage 7. The role consumes AD
 
 ### 6.1 Mapping to This Repository
 
-*Table 3. Pipeline Stage 7 components mapped to repository paths (Study ABC123 tutorial).*
+*Table 3. Pipeline Stage 7 components mapped to repository paths (CDISCPILOT01).*
 
 | Pipeline component | Repository path | Description |
 |--------------------|-----------------|-------------|
-| ADaM inputs | `data/simulated/` | ADSL, ADAE, ADLB (`.rds`) |
-| Data generation | `R/data_generation.R` | Reproducible synthetic ADaM (fixed seed) |
-| Prep logic | `R/data_prep.R` | Joins, TEAE summaries, lab shift functions |
+| ADaM inputs | `data/adam/` | ADSL, ADAE, ADLB, ADEX, ADVS, ADCM, ADMH, ADTTE (`.rds`) from `pharmaverseadam` |
+| Data build | `programs/01_prepare_adam.R` | Load and save CDISCPILOT01 ADaM domains |
+| ADTTE derivation | `programs/02_derive_adtte.R` | Time-to-first dermatologic event |
+| Data verification | `programs/00_verify_adam.R` | STUDYID, row counts, safety-pop overlap |
+| Analysis helpers | `R/*.R` | TEAE, labs, exposure, vitals, CM, KM, patient profile |
 | Visual standards | `R/theme_clinical.R` | Consistent plot styling |
-| Primary dashboard | `app/app.R` | teal MDR application |
-| Fallback dashboard | `app/app_shiny_fallback.R` | Pure Shiny equivalent |
-| Environment | `scripts/setup_env.R`, `renv.lock` | Reproducible package management |
+| Dashboard | `app.R` | Raw Shiny MDR app (teal-equivalent module scope) |
+| Configuration | `config/study_config.yml` | Study metadata, S1–S13 section mapping |
+| Environment | `renv.lock` | Reproducible package management |
 
 ### 6.2 CtQ-to-Module Mapping
 
@@ -296,11 +298,35 @@ The Real-time Visual Analytics Specialist delivers Stage 7. The role consumes AD
 
 | Dashboard module | ADaM input | CtQ factor | MDR purpose |
 |------------------|------------|------------|-------------|
-| Demographics summary | ADSL | Analysis population integrity | Confirm correct review set |
-| Adverse event tables | ADAE | Safety reporting accuracy | Detect treatment-emergent signals |
-| Lab line plots / shifts | ADLB | Laboratory monitoring | Identify clinically relevant lab changes |
-| Patient profile | ADSL, ADAE, ADLB | Traceability | Investigate individual subjects |
-| Filter panel | ADSL flags | Eligibility / population definition | Enforce scope before summarization |
+| Demographics / disposition / exposure | ADSL, ADEX | Analysis population integrity | Confirm correct review set and exposure |
+| Adverse event tables (AET01–AET03) | ADAE | Safety reporting accuracy | Detect treatment-emergent signals |
+| Lab trends / shifts / Hy's Law | ADLB | Laboratory monitoring | Identify clinically relevant lab changes |
+| Vital signs | ADVS | Safety monitoring | Track vitals over time |
+| Concomitant medications | ADCM | Safety reporting accuracy | Review on-treatment concomitant therapy |
+| Time-to-event (KM) | ADTTE | Safety (tolerability) | Quantify time to dermatologic events |
+| Patient profile | ADSL, ADAE, ADLB, ADVS, ADCM, ADMH | Traceability | Investigate individual subjects |
+| Arm filter panel | ADSL flags | Eligibility / population definition | Subset arms while keeping safety pop fixed |
+
+### 6.3 Teal-equivalent analysis catalogue (S1–S13)
+
+*Table 5. FDA ST&F / pharmaverse TLG modules implemented in the raw Shiny dashboard.*
+
+| Section | Tab | teal.modules.clinical analogue | Dataset |
+|---------|-----|-------------------------------|---------|
+| S1 | Demographics | `tm_t_summary` | ADSL |
+| S2 | Demographics | disposition | ADSL |
+| S11 | Demographics | `tm_t_exposure` | ADSL + ADEX |
+| S3 | AE Overview | `tm_t_events_summary` | ADAE |
+| S4 | AE Overview | SAE listing | ADAE |
+| S5 | TEAE Table | `tm_t_events` (AET02) | ADAE |
+| S5b | TEAE Table | `tm_t_events_by_grade` (AET03) | ADAE |
+| S6 | Lab Trends | line plot (AVAL / CHG); all PARAMCD by LBCAT | ADLB |
+| S7 | Lab Shifts | `tm_t_shift_by_arm`; params with BNRIND/ANRIND | ADLB |
+| S8 | Hy's Law | eDISH | ADLB |
+| S12 | Vital Signs | vitals line plot | ADVS |
+| S13 | Concomitant Meds | CM module | ADCM |
+| S9 | Patient Profile | `tm_t_pp_*` / IPPG01 | ADSL + ADAE + ADLB + ADVS + ADCM + ADMH |
+| S10 | Time-to-Event | `tm_g_km` + `tm_t_tte` | ADTTE |
 
 ---
 
@@ -328,7 +354,7 @@ The pipeline aligns with the following guidance (non-exhaustive):
 
 3. **Quality alignment:** "Each module maps to CtQ factors defined in RBQM and the MDRP — I don't visualize everything; I visualize what matters for safety and decision-making."
 
-4. **MDR workflow:** "Reviewers filter the safety population, scan TEAE incidence and lab shifts at the population level, then drill to patient profiles. My filter panel keeps all modules synchronized on the same subset."
+4. **MDR workflow:** "Reviewers work in the safety population, optionally filter arms, scan TEAE incidence (including AET03 severity), exposure, labs, vitals, and con meds at population level, then drill to patient profiles with medical history. The sidebar filter keeps all modules on the same arm subset."
 
 5. **Traceability:** "Templates are version-controlled in Git with renv for reproducibility. Data prep is separated from the app layer so QC can target each component independently."
 
@@ -346,4 +372,4 @@ For demo script and Q&A, see [interview_guide.md](interview_guide.md). For role 
 
 ---
 
-*Document version: 1.0 — Study ABC123 reference architecture*
+*Document version: 2.0 — CDISCPILOT01 teal-equivalent MDR dashboard*

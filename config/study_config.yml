@@ -54,6 +54,38 @@ datasets:
     ctq_factor: Safety reporting accuracy (tolerability)
     fda_stf_section: "Adverse Event Analyses - time-to-event"
 
+  ADEX:
+    description: Exposure - one row per exposure record
+    path: data/adam/ADEX.rds
+    grain: exposure_record
+    key_variables: [USUBJID, ARM, EXTRT, EXDOSE, EXDURD, EXROUTE, EXSTDY, EXENDY]
+    ctq_factor: Analysis population integrity / exposure
+    fda_stf_section: "General (Exposure)"
+
+  ADVS:
+    description: Vital signs - one row per test per visit
+    path: data/adam/ADVS.rds
+    grain: vs_visit
+    key_variables: [USUBJID, ARM, PARAM, PARAMCD, AVAL, BASE, CHG, ABLFL, AVISIT, AVISITN]
+    ctq_factor: Safety / vital signs monitoring
+    fda_stf_section: "Vital Signs Analyses"
+
+  ADCM:
+    description: Concomitant medications - one row per medication record
+    path: data/adam/ADCM.rds
+    grain: cm_record
+    key_variables: [USUBJID, ARM, CMTRT, CMDECOD, CMCLAS, ASTDY, AENDY, ONTRTFL, PREFL]
+    ctq_factor: Safety reporting accuracy
+    fda_stf_section: "Concomitant Medications"
+
+  ADMH:
+    description: Medical history - one row per history term
+    path: data/adam/ADMH.rds
+    grain: mh_record
+    key_variables: [USUBJID, ARM, MHTERM, MHBODSYS, MHSTDY, MHOCCUR]
+    ctq_factor: Traceability / patient context
+    fda_stf_section: "Medical History (patient profile support)"
+
 analysis_population:
   primary: "SAFFL == 'Y'"
   arms_for_safety: [Placebo, Xanomeline Low Dose, Xanomeline High Dose]
@@ -89,7 +121,12 @@ safety_review_sections:
     title: Treatment-Emergent AEs by SOC and PT
     fda_stf: Adverse Event Analyses - Treatment-Emergent Adverse Events
     tlg_ref: AET02
-    tlg_ref_severity: AET03
+    dataset: ADAE
+    shiny_tab: TEAE Table
+  - id: S5b
+    title: Treatment-Emergent AEs by SOC, PT and Severity
+    fda_stf: Adverse Event Analyses - Treatment-Emergent Adverse Events
+    tlg_ref: AET03
     dataset: ADAE
     shiny_tab: TEAE Table
   - id: S6
@@ -115,14 +152,38 @@ safety_review_sections:
     title: Patient Profile Drill-Down
     fda_stf: Adverse Event Analyses (narratives support)
     tlg_ref: IPPG01
-    dataset: ADSL + ADAE + ADLB
+    dataset: ADSL + ADAE + ADLB + ADVS + ADCM + ADMH
     shiny_tab: Patient Profile
+  - id: S11
+    title: Treatment Exposure
+    fda_stf: General
+    tlg_ref: EXSUM
+    dataset: ADSL + ADEX
+    shiny_tab: Demographics
+  - id: S12
+    title: Vital Signs Over Time
+    fda_stf: Vital Signs Analyses
+    tlg_ref: VST01
+    dataset: ADVS
+    shiny_tab: Vital Signs
+  - id: S13
+    title: Concomitant Medications
+    fda_stf: Concomitant Medications
+    tlg_ref: CM01
+    dataset: ADCM
+    shiny_tab: Concomitant Meds
   - id: S10
     title: Time to First Dermatologic Event (KM)
     fda_stf: Adverse Event Analyses - time-to-event
     tlg_ref: KMG01 + TTET01
     dataset: ADTTE
     shiny_tab: Time-to-Event
+  - id: S14
+    title: Safety Parameter Correlation
+    fda_stf: Laboratory / Vital Signs exploratory
+    tlg_ref: Custom (Spearman heatmap by arm)
+    dataset: ADLB + ADVS
+    shiny_tab: Correlation
 
 # Liver chemistry parameters + Hy's Law thresholds (FDA: max post-baseline values)
 hepatic_safety:
@@ -133,16 +194,47 @@ hepatic_safety:
     alt_threshold_x_uln: 3
     bili_threshold_x_uln: 2
 
-# Time-to-event endpoint definition (drives programs/02_derive_adtte.R + KM tab)
-time_to_event:
-  paramcd: TTDE
-  param: "Time to First Dermatologic Event (days)"
-  event_label: "First dermatologic adverse event"
-  # Dermatologic event = treatment-emergent AND (application-site PT OR skin SOC)
-  event_decod_prefix: "APPLICATION SITE"
-  event_soc: "SKIN AND SUBCUTANEOUS TISSUE DISORDERS"
-  censor_var: TRTDURD
-  censor_label: "End of treatment (no dermatologic event)"
+# Time-to-event endpoints (programs/02_derive_adtte.R + Time-to-Event tab dropdown)
+time_to_event_endpoints:
+  - paramcd: TTDE
+    label: "Dermatologic events"
+    param: "Time to First Dermatologic Event (days)"
+    event_label: "First dermatologic adverse event"
+    event_decod_prefix: "APPLICATION SITE"
+    event_soc: "SKIN AND SUBCUTANEOUS TISSUE DISORDERS"
+    censor_label: "End of treatment (no dermatologic event)"
+  - paramcd: TTCE
+    label: "Cardiac events"
+    param: "Time to First Cardiac Event (days)"
+    event_label: "First cardiac adverse event"
+    event_soc: "CARDIAC DISORDERS"
+    censor_label: "End of treatment (no cardiac event)"
+
+patient_profile:
+  disposition_variable: EOSSTT
+  completed_eosstt: COMPLETED
+  # Excluded from Patient Profile lab table and panel plots (not hepatic/chem/hema/urine).
+  exclude_lbcat:
+    - OTHER
+
+correlation_review:
+  value_summary: max_post_baseline
+  parameters:
+    - "Alanine Aminotransferase (U/L)"
+    - "Aspartate Aminotransferase (U/L)"
+    - "Bilirubin (umol/L)"
+    - "Creatinine (umol/L)"
+    - "Hemoglobin (mmol/L)"
+    - "Leukocytes (10^9/L)"
+    - "Platelet (10^9/L)"
+    - "Systolic Blood Pressure (mmHg)"
+    - "Diastolic Blood Pressure (mmHg)"
+    - "Pulse Rate (beats/min)"
+    - "Weight (kg)"
+    - "Mean Arterial Pressure (mmHg)"
+
+cm_review:
+  on_treatment_flag: ONTRTFL
 
 display:
   arm_levels:
@@ -154,3 +246,11 @@ display:
     Xanomeline Low Dose: "#4c9be8"
     Xanomeline High Dose: "#e8694c"
   top_n_ae: 10
+  vs_params:
+    - Systolic Blood Pressure (mmHg)
+    - Diastolic Blood Pressure (mmHg)
+    - Pulse Rate (beats/min)
+    - Weight (kg)
+  top_n_cm: 10
+  # Lab Trends / Shifts / Patient Profile: all ADLB PARAMCD values are loaded
+  # dynamically via lab_param_catalog() — grouped by LBCAT (~47 chemistry/hema/urine tests).

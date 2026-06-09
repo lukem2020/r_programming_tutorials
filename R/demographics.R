@@ -6,8 +6,8 @@ suppressPackageStartupMessages({
 })
 
 # Wide demographics table: one row per characteristic, one column per arm.
-demographics_table <- function(adsl, cfg) {
-  d <- safety_adsl(adsl, cfg)
+demographics_table <- function(adsl, cfg, arms = NULL) {
+  d <- safety_adsl(adsl, cfg) %>% filter_by_arms(., cfg, arms)
   denom <- d %>% count(.data$ARM, name = "den")
 
   n_row <- d %>%
@@ -42,8 +42,8 @@ demographics_table <- function(adsl, cfg) {
 }
 
 # S2 Disposition: end-of-study status counts by arm (EOSSTT).
-disposition_table <- function(adsl, cfg) {
-  d <- safety_adsl(adsl, cfg)
+disposition_table <- function(adsl, cfg, arms = NULL) {
+  d <- safety_adsl(adsl, cfg) %>% filter_by_arms(., cfg, arms)
   denom <- d %>% count(.data$ARM, name = "den")
   d %>%
     filter(!is.na(.data$EOSSTT)) %>%
