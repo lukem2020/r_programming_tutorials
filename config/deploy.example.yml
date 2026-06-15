@@ -1,0 +1,20 @@
+# Copy this file to config/deploy.yml and fill in your shinyapps.io credentials.
+# config/deploy.yml is gitignored — never commit tokens or secrets.
+#
+# Get credentials: https://www.shinyapps.io/ → Account → Tokens
+
+shinyapps:
+  account: "61nbmw-luke-meyer"
+  token: "1703FA508D54EC785AC1AD03D8E2C8CB"
+  secret: "ZZfGxYHXzeyUrLBXTPfvpuqfjYuvA3BSQ2rjC+mT"
+  app_name: "mdr-safety-dashboard"
+
+deploy:
+  # Files bundled into the shinyapps.io deployment (do not include deploy.yml).
+  app_files:
+    - app.R
+    - R/
+    - config/study_config.yml
+    - data/adam/
+    - renv.lock
+    - .Rprofile
