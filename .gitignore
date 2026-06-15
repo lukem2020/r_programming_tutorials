@@ -60,3 +60,6 @@ config/deploy.yml
 
 renv/
 .venv/
+
+.cursor/
+
