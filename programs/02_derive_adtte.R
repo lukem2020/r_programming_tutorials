@@ -48,13 +48,14 @@ derive_tte_endpoint <- function(sl, adae, endpoint) {
       PARAM    = endpoint$param,
       CNSR     = ifelse(is.na(.data$first_day), 1L, 0L),
       AVAL     = ifelse(is.na(.data$first_day), .data$cens_days, .data$first_day),
+      AVALU    = "DAY",
       STARTDT  = .data$TRTSDT,
       EVNTDESC = ifelse(.data$CNSR == 0L, endpoint$event_label, "Censored"),
       CNSDTDSC = ifelse(.data$CNSR == 1L, endpoint$censor_label, NA_character_)
     ) %>%
     filter(!is.na(.data$AVAL), .data$AVAL > 0) %>%
     select("STUDYID", "USUBJID", "ARM", "SAFFL", "PARAMCD", "PARAM",
-           "AVAL", "CNSR", "STARTDT", "EVNTDESC", "CNSDTDSC")
+           "AVAL", "AVALU", "CNSR", "STARTDT", "EVNTDESC", "CNSDTDSC")
 }
 
 adtte <- bind_rows(lapply(cfg$time_to_event_endpoints, derive_tte_endpoint, sl = sl, adae = adae))

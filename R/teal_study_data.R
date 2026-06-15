@@ -5,35 +5,52 @@ suppressPackageStartupMessages({
   library(teal.slice)
 })
 
-build_teal_data <- function(root = find_project_root(), cfg = load_config(root)) {
-  st <- load_study_data(root, cfg)
+CORE_STUDY_DATASETS <- c("ADSL", "ADAE", "ADLB", "ADVS", "ADCM", "ADEX", "ADMH", "ADTTE")
+OPTIONAL_ADAM_DATASETS <- c("ADEG", "ADAB", "ADPC", "ADPP")
+
+load_teal_dataset <- function(root, cfg, nm) {
+  block <- cfg$datasets[[nm]]
+  if (is.null(block)) return(NULL)
+  path <- file.path(root, block$path)
+  if (!file.exists(path)) return(NULL)
+  df <- readRDS(path)
+  if (nm == "ADTTE" && !"AVALU" %in% names(df)) df$AVALU <- "DAY"
+  if (nm %in% c("ADLB", "ADVS")) df <- add_bds_avalu(df)
+  trim_teal_dataset(df, nm, cfg)
+}
+
+build_teal_data <- function(
+  root = find_project_root(),
+  cfg = load_config(root),
+  datasets = NULL
+) {
+  if (is.null(datasets)) datasets <- CORE_STUDY_DATASETS
   adam_dir <- file.path(root, "data", "adam")
 
-  datasets <- list(
-    ADSL = st$ADSL,
-    ADAE = st$ADAE,
-    ADLB = st$ADLB,
-    ADVS = st$ADVS,
-    ADCM = st$ADCM,
-    ADEX = st$ADEX,
-    ADMH = st$ADMH
-  )
-  if (!is.null(st$ADTTE)) datasets$ADTTE <- st$ADTTE
-
-  for (nm in c("ADEG", "ADAB", "ADPC", "ADPP")) {
-    path <- file.path(adam_dir, paste0(nm, ".rds"))
-    if (file.exists(path)) datasets[[nm]] <- readRDS(path)
+  ds_list <- list()
+  for (nm in datasets) {
+    if (nm %in% CORE_STUDY_DATASETS) {
+      df <- load_teal_dataset(root, cfg, nm)
+      if (!is.null(df)) ds_list[[nm]] <- df
+    } else if (nm %in% OPTIONAL_ADAM_DATASETS) {
+      path <- file.path(adam_dir, paste0(nm, ".rds"))
+      if (file.exists(path)) {
+        ds_list[[nm]] <- trim_teal_dataset(readRDS(path), nm, cfg)
+      }
+    }
   }
 
-  data <- do.call(teal_data, datasets)
+  if (is.null(ds_list$ADSL)) {
+    stop("ADSL is required for the teal app.", call. = FALSE)
+  }
+
+  data <- do.call(teal_data, ds_list)
   present <- intersect(names(teal.data::default_cdisc_join_keys), names(data))
   teal.data::join_keys(data) <- teal.data::default_cdisc_join_keys[present]
   data
 }
 
-teal_arm_filter <- function(
-  datanames = c("ADSL", "ADAE", "ADLB", "ADVS", "ADCM", "ADEX", "ADMH", "ADTTE", "ADEG", "ADAB", "ADPC", "ADPP")
-) {
+teal_arm_filter <- function(datanames = CORE_STUDY_DATASETS) {
   teal_slices(
     teal_slice(dataname = "ADSL", varname = "ARM", title = "Treatment arm"),
     module_specific = FALSE

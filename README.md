@@ -74,7 +74,7 @@ All commands assume you are in the project root and that `R` / `Rscript` are on 
 # Restore the exact package versions from renv.lock
 Rscript -e 'renv::restore(prompt = FALSE)'
 
-# On Windows, if packages fail to load from renv, disable the sandbox:
+# On Windows, disable the renv sandbox only when installing packages or snapshotting:
 export RENV_CONFIG_SANDBOX_ENABLED=FALSE
 
 # Check whether the library is in sync with renv.lock
@@ -104,20 +104,17 @@ Rscript programs/05_smoke_test_teal.R
 
 ### Run the TLG Catalog app (teal)
 
-`shiny` loads `bslib` when the package attaches. If renv is not active yet, R may pick up a broken system `bslib` (missing SCSS under `C:/R/library`) and the UI will fail at runtime. Use the launcher so renv is active **before** `shiny` loads:
+Use the launcher — it isolates the project `renv` library so a broken system `bslib` (e.g. under `C:/R/library`) cannot shadow packages:
 
 ```bash
-export RENV_CONFIG_SANDBOX_ENABLED=FALSE
-
-# Recommended launcher (activates renv, then starts the app)
+# Recommended (no extra env vars needed for normal runs)
 Rscript run_app_teal.R
 
 # Fixed port, no browser (remote / CI)
 Rscript run_app_teal.R 7900
-
-# Alternative one-liner (same idea: renv first)
-Rscript -e "source('renv/activate.R'); shiny::runApp('app_teal')"
 ```
+
+Only set `RENV_CONFIG_SANDBOX_ENABLED=FALSE` when **installing** or **snapshotting** packages, not when starting the app.
 
 ### Run the legacy dashboard
 

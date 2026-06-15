@@ -76,17 +76,17 @@ add_ae_flags <- function(adae) {
     explicit_na_df()
 }
 
-prep_bds <- function(df) {
+prep_bds <- function(df, skip_explicit_na = FALSE) {
   if (is.null(df)) return(NULL)
-  df %>%
-    mutate(ARM = factor(.data$ARM, levels = arm_levels)) %>%
-    explicit_na_df()
+  out <- df %>%
+    mutate(ARM = factor(.data$ARM, levels = arm_levels))
+  if (skip_explicit_na) out else explicit_na_df(out)
 }
 
 ADSL <- prep_adsl(st$ADSL)
 ADAE <- add_ae_flags(st$ADAE %>% filter(.data$TRTEMFL == "Y"))
-ADLB <- prep_bds(st$ADLB)
-ADVS <- prep_bds(st$ADVS)
+ADLB <- prep_bds(st$ADLB, skip_explicit_na = TRUE)
+ADVS <- prep_bds(st$ADVS, skip_explicit_na = TRUE)
 ADCM <- prep_bds(st$ADCM)
 ADEX <- prep_bds(st$ADEX)
 ADMH <- prep_bds(st$ADMH)

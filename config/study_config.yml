@@ -254,3 +254,11 @@ display:
   top_n_cm: 10
   # Lab Trends / Shifts / Patient Profile: all ADLB PARAMCD values are loaded
   # dynamically via lab_param_catalog() — grouped by LBCAT (~47 chemistry/hema/urine tests).
+
+# teal Shiny app performance (programs/04_prepare_teal_adam.R + R/teal_adam_trim.R)
+teal_app:
+  optimize_datasets: true
+  # null = use display.vs_params (drops ~40% of ADVS rows for VST01)
+  advs_params: null
+  # Baseline + Week N only (excludes unscheduled / post-baseline summary visits on line plots)
+  scheduled_visit_pattern: "^Baseline$|^Week"

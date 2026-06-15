@@ -5,7 +5,7 @@ if (file.exists("renv/activate.R")) source("renv/activate.R")
 
 for (f in c(
   "load_data.R", "demographics.R", "ae_analysis.R",
-  "tlg_registry_load.R", "teal_study_data.R", "tlg_tern_layouts.R"
+  "tlg_registry_load.R", "teal_adam_trim.R", "teal_study_data.R", "tlg_tern_layouts.R"
 )) {
   source(file.path("R", f))
 }

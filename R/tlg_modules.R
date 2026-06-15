@@ -16,25 +16,36 @@ adsl_facet_sel <- function() {
   )
 }
 
+bds_y_unit <- function(dataname) {
+  teal.transform::choices_selected(
+    teal.transform::variable_choices(dataname, subset = "AVALU"),
+    "AVALU"
+  )
+}
+
 tlg_listing_module <- function(entry, dataname, cols, filter_fun = NULL) {
   label <- tlg_module_label(entry)
   teal::module(
     label = label,
     server = function(id, data, ...) {
       shiny::moduleServer(id, function(input, output, session) {
-        output$lst <- shiny::renderUI({
+        output$lst <- DT::renderDT({
           df <- data()[[dataname]]
           if (!is.null(filter_fun)) df <- filter_fun(df)
-          if (nrow(df) == 0L) return(shiny::tags$p("No records match the listing criteria."))
+          if (nrow(df) == 0L) return(NULL)
           keep <- intersect(cols, names(df))
-          lst <- rlistings::as_listing(df[, keep, drop = FALSE], key_cols = keep[1])
-          teal.transform::table_inset(lst)
+          DT::datatable(
+            df[, keep, drop = FALSE],
+            options = list(pageLength = 25, scrollX = TRUE, lengthMenu = c(25, 50, 100)),
+            rownames = FALSE,
+            filter = "top"
+          )
         })
       })
     },
     ui = function(id, ...) {
       ns <- shiny::NS(id)
-      shiny::tagList(shiny::h4(label), shiny::uiOutput(ns("lst")))
+      shiny::tagList(shiny::h4(label), DT::DTOutput(ns("lst")))
     },
     datanames = dataname
   )
@@ -43,6 +54,7 @@ tlg_listing_module <- function(entry, dataname, cols, filter_fun = NULL) {
 tlg_teal_module <- function(entry, cfg) {
   label <- tlg_module_label(entry)
   arm <- arm_sel()
+  lineplot_scheduled <- function(dataname) scheduled_bds_transformators(dataname, cfg)
 
   switch(entry$code,
     DMT01 = teal.modules.clinical::tm_t_summary(
@@ -75,6 +87,15 @@ tlg_teal_module <- function(entry, cfg) {
       dataname = "ADAE",
       arm_var = arm,
       flag_var_anl = teal.transform::choices_selected(c("SER", "SEV", "REL"), "SER"),
+      dthfl_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADSL", subset = "DTHFL"),
+        "DTHFL"
+      ),
+      dcsreas_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADSL", subset = "EOSSTT"),
+        "EOSSTT"
+      ),
+      count_wd = FALSE,
       add_total = TRUE
     ),
     AET02 = teal.modules.clinical::tm_t_events(
@@ -106,19 +127,23 @@ tlg_teal_module <- function(entry, cfg) {
       label = label,
       dataname = "ADLB",
       group_var = arm,
-      x = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "AVISIT"), "AVISIT"),
-      y = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", c("AVAL", "CHG")), "AVAL"),
-      paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "PARAMCD"), "PARAMCD"),
-      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT")
+      x = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", subset = "AVISIT"), "AVISIT"),
+      y = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", subset = c("AVAL", "CHG")), "AVAL"),
+      y_unit = bds_y_unit("ADLB"),
+      paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", subset = "PARAMCD"), "PARAMCD"),
+      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT"),
+      transformators = lineplot_scheduled("ADLB")
     ),
     LTG01 = teal.modules.clinical::tm_g_lineplot(
       label = label,
       dataname = "ADLB",
       group_var = arm,
-      x = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "AVISIT"), "AVISIT"),
-      y = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", c("AVAL", "CHG")), "AVAL"),
-      paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "PARAMCD"), "PARAMCD"),
-      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT")
+      x = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", subset = "AVISIT"), "AVISIT"),
+      y = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", subset = c("AVAL", "CHG")), "AVAL"),
+      y_unit = bds_y_unit("ADLB"),
+      paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", subset = "PARAMCD"), "PARAMCD"),
+      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT"),
+      transformators = lineplot_scheduled("ADLB")
     ),
     LBT04 = teal.modules.clinical::tm_t_shift_by_arm(
       label = label,
@@ -148,9 +173,10 @@ tlg_teal_module <- function(entry, cfg) {
       label = label,
       dataname = "ADVS",
       group_var = arm,
-      x = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", "AVISIT"), "AVISIT"),
-      y = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", c("AVAL", "CHG")), "AVAL"),
-      paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", "PARAMCD"), "PARAMCD"),
+      x = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", subset = "AVISIT"), "AVISIT"),
+      y = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", subset = c("AVAL", "CHG")), "AVAL"),
+      y_unit = bds_y_unit("ADVS"),
+      paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", subset = "PARAMCD"), "PARAMCD"),
       param = teal.transform::choices_selected(teal.transform::value_choices("ADVS", "PARAMCD", "PARAM"), "SYSBP")
     ),
     CMT01A = teal.modules.clinical::tm_t_summary(
@@ -191,8 +217,18 @@ tlg_teal_module <- function(entry, cfg) {
       ),
       strata_var = adsl_strata_sel("SEX"),
       facet_var = adsl_facet_sel(),
-      aval_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "AVAL"), "AVAL"),
-      cnsr_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "CNSR"), "CNSR")
+      aval_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "AVAL"),
+        "AVAL"
+      ),
+      cnsr_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "CNSR"),
+        "CNSR"
+      ),
+      time_unit_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "AVALU"),
+        "AVALU"
+      )
     ),
     TTET01 = teal.modules.clinical::tm_t_tte(
       label = label,
@@ -204,8 +240,18 @@ tlg_teal_module <- function(entry, cfg) {
       ),
       strata_var = adsl_strata_sel("SEX"),
       time_points = teal.transform::choices_selected(c(30, 60, 90, 180), 30),
-      aval_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "AVAL"), "AVAL"),
-      cnsr_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "CNSR"), "CNSR")
+      aval_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "AVAL"),
+        "AVAL"
+      ),
+      cnsr_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "CNSR"),
+        "CNSR"
+      ),
+      time_unit_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "AVALU"),
+        "AVALU"
+      )
     ),
     IPPG01 = teal.modules.clinical::tm_g_pp_patient_timeline(
       label = label,
@@ -257,25 +303,20 @@ tlg_teal_module <- function(entry, cfg) {
   )
 }
 
-tlg_module_for_entry <- function(entry, cfg, inventory = NULL, registry = NULL) {
-  if (!entry_has_data(entry, inventory)) {
-    return(tlg_unavailable_module(entry, inventory))
-  }
+tlg_module_for_entry <- function(entry, cfg, inventory = NULL, registry = NULL, root = NULL) {
+  if (!entry_has_data(entry, inventory, root)) return(NULL)
+  if (!entry_is_runnable(entry, registry)) return(NULL)
   if (identical(entry$implementation, "tern_layout")) {
     return(tlg_tern_module(entry))
   }
-  if (identical(entry$implementation, "teal_module") && is_phase1_entry(entry, registry)) {
+  if (identical(entry$implementation, "teal_module")) {
     mod <- tlg_teal_module(entry, cfg)
     if (!is.null(mod)) return(mod)
   }
-  if (identical(entry$status, "ready") && identical(entry$implementation, "teal_module")) {
-    mod <- tlg_teal_module(entry, cfg)
-    if (!is.null(mod)) return(mod)
-  }
-  tlg_unavailable_module(entry, inventory)
+  NULL
 }
 
-build_tlg_modules <- function(registry, cfg, inventory = NULL) {
+build_tlg_modules <- function(registry, cfg, inventory = NULL, root = NULL) {
   by_cat <- tlg_entries_by_category(registry)
   cat_order <- c("tables", "listings", "graphs")
   cat_labels <- c(tables = "Tables", listings = "Listings", graphs = "Graphs")
@@ -287,24 +328,21 @@ build_tlg_modules <- function(registry, cfg, inventory = NULL) {
     domain_mods <- lapply(names(domains), function(dom) {
       dom_entries <- domains[[dom]]
       mods <- lapply(dom_entries, function(e) {
-        tlg_module_for_entry(e, cfg, inventory, registry)
+        tlg_module_for_entry(e, cfg, inventory, registry, root)
       })
+      mods <- Filter(Negate(is.null), mods)
+      if (length(mods) == 0L) return(NULL)
       do.call(teal::modules, c(mods, list(label = domain_display_name(dom))))
     })
     names(domain_mods) <- NULL
+    domain_mods <- Filter(Negate(is.null), domain_mods)
+    if (length(domain_mods) == 0L) return(NULL)
     do.call(teal::modules, c(domain_mods, list(label = cat_labels[[cat]])))
   })
   names(category_modules) <- NULL
   category_modules <- Filter(Negate(is.null), category_modules)
-
-  ippg <- Filter(function(e) identical(e$code, "IPPG01"), registry$entries)[[1]]
-  profile_mod <- if (!is.null(ippg)) {
-    tlg_module_for_entry(ippg, cfg, inventory, registry)
-  } else {
-    NULL
+  if (length(category_modules) == 0L) {
+    stop("No runnable TLG modules after registry filter.", call. = FALSE)
   }
-
-  all_mods <- category_modules
-  if (!is.null(profile_mod)) all_mods <- c(all_mods, list(profile_mod))
-  do.call(teal::modules, all_mods)
+  do.call(teal::modules, category_modules)
 }
