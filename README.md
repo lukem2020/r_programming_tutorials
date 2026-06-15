@@ -104,14 +104,19 @@ Rscript programs/05_smoke_test_teal.R
 
 ### Run the TLG Catalog app (teal)
 
+`shiny` loads `bslib` when the package attaches. If renv is not active yet, R may pick up a broken system `bslib` (missing SCSS under `C:/R/library`) and the UI will fail at runtime. Use the launcher so renv is active **before** `shiny` loads:
+
 ```bash
 export RENV_CONFIG_SANDBOX_ENABLED=FALSE
 
-# Launch locally (opens a browser)
-Rscript -e 'shiny::runApp("app_teal")'
+# Recommended launcher (activates renv, then starts the app)
+Rscript run_app_teal.R
 
-# Launch on a fixed port without opening a browser
-Rscript -e 'shiny::runApp("app_teal", port = 7900, launch.browser = FALSE)'
+# Fixed port, no browser (remote / CI)
+Rscript run_app_teal.R 7900
+
+# Alternative one-liner (same idea: renv first)
+Rscript -e "source('renv/activate.R'); shiny::runApp('app_teal')"
 ```
 
 ### Run the legacy dashboard

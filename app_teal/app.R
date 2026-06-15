@@ -1,5 +1,6 @@
 # TLG Catalog teal Shiny app (CDISCPILOT01 ADaM).
-# Run: Rscript -e 'shiny::runApp("app_teal")'
+# Run: Rscript run_app_teal.R
+# (Use the project-root launcher so renv loads before shiny/bslib.)
 
 if (file.exists(file.path(getwd(), "renv", "activate.R"))) {
   source(file.path(getwd(), "renv", "activate.R"))

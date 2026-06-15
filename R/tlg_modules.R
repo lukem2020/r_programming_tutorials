@@ -2,6 +2,20 @@
 
 arm_sel <- function() teal.transform::choices_selected(c("ARM", "ARMCD"), "ARM")
 
+adsl_strata_sel <- function(selected = "SEX") {
+  teal.transform::choices_selected(
+    teal.transform::variable_choices("ADSL", c("SEX", "RACE", "AGEGR1")),
+    selected
+  )
+}
+
+adsl_facet_sel <- function() {
+  teal.transform::choices_selected(
+    teal.transform::variable_choices("ADSL", c("SEX", "RACE", "AGEGR1")),
+    NULL
+  )
+}
+
 tlg_listing_module <- function(entry, dataname, cols, filter_fun = NULL) {
   label <- tlg_module_label(entry)
   teal::module(
@@ -42,10 +56,19 @@ tlg_teal_module <- function(entry, cfg) {
       label = label,
       dataname = "ADEX",
       col_by_var = arm,
+      row_by_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADEX", c("RACE", "SEX", "REGION1")),
+        "RACE"
+      ),
       paramcd = teal.transform::choices_selected(
         choices = teal.transform::value_choices("ADEX", "PARAMCD", "PARAM"),
-        selected = "DURD"
-      )
+        selected = "TDURD"
+      ),
+      parcat = teal.transform::choices_selected(
+        teal.transform::value_choices("ADEX", "PARCAT1"),
+        "OVERALL"
+      ),
+      add_total = FALSE
     ),
     AET01 = teal.modules.clinical::tm_t_events_summary(
       label = label,
@@ -86,7 +109,7 @@ tlg_teal_module <- function(entry, cfg) {
       x = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "AVISIT"), "AVISIT"),
       y = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", c("AVAL", "CHG")), "AVAL"),
       paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "PARAMCD"), "PARAMCD"),
-      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "Alanine Aminotransferase (U/L)")
+      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT")
     ),
     LTG01 = teal.modules.clinical::tm_g_lineplot(
       label = label,
@@ -95,16 +118,31 @@ tlg_teal_module <- function(entry, cfg) {
       x = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "AVISIT"), "AVISIT"),
       y = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", c("AVAL", "CHG")), "AVAL"),
       paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "PARAMCD"), "PARAMCD"),
-      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "Alanine Aminotransferase (U/L)")
+      param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT")
     ),
     LBT04 = teal.modules.clinical::tm_t_shift_by_arm(
       label = label,
       dataname = "ADLB",
       arm_var = arm,
-      paramcd = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "Alanine Aminotransferase (U/L)"),
-      visit_var = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "AVISIT"), "AVISIT"),
-      aval_var = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "ANRIND"), "ANRIND"),
-      baseline_var = teal.transform::choices_selected(teal.transform::variable_choices("ADLB", "BNRIND"), "BNRIND")
+      paramcd = teal.transform::choices_selected(
+        teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"),
+        "ALT"
+      ),
+      visit_var = teal.transform::choices_selected(
+        teal.transform::value_choices("ADLB", "AVISIT"),
+        "POST-BASELINE MINIMUM"
+      ),
+      aval_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADLB", subset = "ANRIND"),
+        "ANRIND",
+        fixed = TRUE
+      ),
+      baseline_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADLB", subset = "BNRIND"),
+        "BNRIND",
+        fixed = TRUE
+      ),
+      useNA = "ifany"
     ),
     VST01 = teal.modules.clinical::tm_g_lineplot(
       label = label,
@@ -113,7 +151,7 @@ tlg_teal_module <- function(entry, cfg) {
       x = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", "AVISIT"), "AVISIT"),
       y = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", c("AVAL", "CHG")), "AVAL"),
       paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", "PARAMCD"), "PARAMCD"),
-      param = teal.transform::choices_selected(teal.transform::value_choices("ADVS", "PARAMCD", "PARAM"), "Systolic Blood Pressure (mmHg)")
+      param = teal.transform::choices_selected(teal.transform::value_choices("ADVS", "PARAMCD", "PARAM"), "SYSBP")
     ),
     CMT01A = teal.modules.clinical::tm_t_summary(
       label = label,
@@ -147,7 +185,12 @@ tlg_teal_module <- function(entry, cfg) {
       label = label,
       dataname = "ADTTE",
       arm_var = arm,
-      paramcd = teal.transform::choices_selected(teal.transform::value_choices("ADTTE", "PARAMCD", "PARAM"), "TTDE"),
+      paramcd = teal.transform::choices_selected(
+        teal.transform::value_choices("ADTTE", "PARAMCD", "PARAM"),
+        "TTDE"
+      ),
+      strata_var = adsl_strata_sel("SEX"),
+      facet_var = adsl_facet_sel(),
       aval_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "AVAL"), "AVAL"),
       cnsr_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "CNSR"), "CNSR")
     ),
@@ -155,7 +198,12 @@ tlg_teal_module <- function(entry, cfg) {
       label = label,
       dataname = "ADTTE",
       arm_var = arm,
-      paramcd = teal.transform::choices_selected(teal.transform::value_choices("ADTTE", "PARAMCD", "PARAM"), "TTDE"),
+      paramcd = teal.transform::choices_selected(
+        teal.transform::value_choices("ADTTE", "PARAMCD", "PARAM"),
+        "TTDE"
+      ),
+      strata_var = adsl_strata_sel("SEX"),
+      time_points = teal.transform::choices_selected(c(30, 60, 90, 180), 30),
       aval_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "AVAL"), "AVAL"),
       cnsr_var = teal.transform::choices_selected(teal.transform::variable_choices("ADTTE", "CNSR"), "CNSR")
     ),
@@ -163,7 +211,47 @@ tlg_teal_module <- function(entry, cfg) {
       label = label,
       dataname_adae = "ADAE",
       dataname_adcm = "ADCM",
-      patient_col = "USUBJID"
+      patient_col = "USUBJID",
+      aeterm = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADAE", "AETERM"),
+        "AETERM"
+      ),
+      cmdecod = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADCM", subset = "CMDECOD"),
+        "CMDECOD"
+      ),
+      aetime_start = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADAE", subset = "ASTDTM"),
+        "ASTDTM"
+      ),
+      aetime_end = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADAE", subset = "AENDTM"),
+        "AENDTM"
+      ),
+      dstime_start = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADCM", subset = "ASTDTM"),
+        "ASTDTM"
+      ),
+      dstime_end = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADCM", subset = "AENDTM"),
+        "AENDTM"
+      ),
+      aerelday_start = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADAE", subset = "ASTDY"),
+        "ASTDY"
+      ),
+      aerelday_end = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADAE", subset = "AENDY"),
+        "AENDY"
+      ),
+      dsrelday_start = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADCM", subset = "ASTDY"),
+        "ASTDY"
+      ),
+      dsrelday_end = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADCM", subset = "AENDY"),
+        "AENDY"
+      )
     ),
     NULL
   )
