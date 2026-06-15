@@ -56,8 +56,10 @@ signal at the skin rather than a hepatic safety concern.
 
 ---
 
-- App entry point: `app.R` (sources `R/`, reads `config/study_config.yml` + `data/adam/`)
-- Analysis code: `R/`  |  Run-scripts: `programs/`  |  Config: `config/study_config.yml`
+- App entry points:
+  - **TLG Catalog (teal):** `app_teal/app.R` — full catalog navigation with `teal` / `tern` modules
+  - **Legacy ggplot2 dashboard:** `app.R` — original ST&F views for validation
+- Analysis code: `R/`  |  Run-scripts: `programs/`  |  Config: `config/study_config.yml`, `config/tlg_registry.yml`
 
 ---
 
@@ -71,6 +73,9 @@ All commands assume you are in the project root and that `R` / `Rscript` are on 
 ```bash
 # Restore the exact package versions from renv.lock
 Rscript -e 'renv::restore(prompt = FALSE)'
+
+# On Windows, if packages fail to load from renv, disable the sandbox:
+export RENV_CONFIG_SANDBOX_ENABLED=FALSE
 
 # Check whether the library is in sync with renv.lock
 Rscript -e 'renv::status()'
@@ -88,12 +93,28 @@ Rscript programs/01_prepare_adam.R
 # 2. Derive ADTTE (Time to First Dermatologic Event)
 Rscript programs/02_derive_adtte.R
 
+# 3. Prepare teal-ready ADaM (tern explicit NA, AE flags, optional domains)
+Rscript programs/04_prepare_teal_adam.R
+
 # Optional: verify datasets and smoke-test helpers
 Rscript programs/00_verify_adam.R
 Rscript programs/03_smoke_test.R
+Rscript programs/05_smoke_test_teal.R
 ```
 
-### Run the app
+### Run the TLG Catalog app (teal)
+
+```bash
+export RENV_CONFIG_SANDBOX_ENABLED=FALSE
+
+# Launch locally (opens a browser)
+Rscript -e 'shiny::runApp("app_teal")'
+
+# Launch on a fixed port without opening a browser
+Rscript -e 'shiny::runApp("app_teal", port = 7900, launch.browser = FALSE)'
+```
+
+### Run the legacy dashboard
 
 ```bash
 # Launch locally (opens a browser)

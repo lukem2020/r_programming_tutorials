@@ -1,0 +1,59 @@
+study_id: CDISCPILOT01
+updated: 2026-06-15 11:22:24.638748
+datasets:
+- name: ADSL
+  path: data/adam/ADSL.rds
+  available: yes
+  rows: 254
+- name: ADAE
+  path: data/adam/ADAE.rds
+  available: yes
+  rows: 1122
+- name: ADLB
+  path: data/adam/ADLB.rds
+  available: yes
+  rows: 83652
+- name: ADVS
+  path: data/adam/ADVS.rds
+  available: yes
+  rows: 65032
+- name: ADCM
+  path: data/adam/ADCM.rds
+  available: yes
+  rows: 7510
+- name: ADEX
+  path: data/adam/ADEX.rds
+  available: yes
+  rows: 6315
+- name: ADMH
+  path: data/adam/ADMH.rds
+  available: yes
+  rows: 1818
+- name: ADTTE
+  path: data/adam/ADTTE.rds
+  available: yes
+  rows: 504
+- name: ADEG
+  path: data/adam/ADEG.rds
+  available: yes
+  rows: 78756
+  source: pharmaverseadam (study-aligned subset)
+- name: ADAB
+  path: data/adam/ADAB.rds
+  available: yes
+  rows: 6430
+  source: pharmaverseadam (study-aligned subset)
+- name: ADPC
+  path: data/adam/ADPC.rds
+  available: yes
+  rows: 4479
+  source: pharmaverseadam (study-aligned subset)
+- name: ADPP
+  path: data/adam/ADPP.rds
+  available: yes
+  rows: 2688
+  source: pharmaverseadam (study-aligned subset)
+- name: ADQS
+  available: no
+  rows: 0
+  note: Not available for CDISCPILOT01 in current pipeline

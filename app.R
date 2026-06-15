@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
 for (f in c("load_data.R", "theme_clinical.R", "visit_aggregation.R", "trend_regression.R",
             "demographics.R", "exposure_analysis.R", "ae_analysis.R", "lab_analysis.R",
             "vs_analysis.R", "cm_analysis.R", "patient_profile.R", "tte_analysis.R",
-            "correlation_analysis.R")) {
+            "correlation_analysis.R", "tlg_layout.R")) {
   source(file.path(.root, "R", f))
 }
 
@@ -40,117 +40,116 @@ SUBJECTS <- profile_subject_choices(ADSL, cfg)
 ARM_CHOICES <- arm_levels(cfg)
 TTE_ENDPOINTS <- tte_all_endpoint_choices(cfg, ADAE, ADSL)
 DEFAULT_TTE <- TTE_ENDPOINTS[[1]]
-
-section_label <- function(id) {
-  s <- Filter(function(x) x$id == id, cfg$safety_review_sections)[[1]]
-  sprintf("%s | FDA ST&F: %s | TLG: %s", s$title, s$fda_stf, s$tlg_ref)
-}
+TLG_NAV <- tlg_catalog_items()
 
 # ---- UI ----------------------------------------------------------------------
-ui <- fluidPage(
-  title = "MDR Safety Dashboard",
-  tags$head(tags$style(HTML("
-    body { background:#f4f6f8; color:#1f2d3d;
-           font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
-    .container-fluid { max-width:1320px; }
-    .app-header { background:#1f2d3d; color:#fff; padding:18px 24px;
-                  border-radius:8px; margin-top:14px;
-                  box-shadow:0 1px 3px rgba(31,45,61,0.18); }
-    .app-header h2 { margin:0; font-weight:600; font-size:22px; letter-spacing:0.2px; }
-    .app-header .app-sub { color:#aebccb; font-size:13px; margin-top:6px; }
-    .app-header .app-pop { display:inline-block; background:rgba(255,255,255,0.12);
-                  color:#e8eef4; font-size:12px; padding:2px 9px; border-radius:12px;
-                  margin-right:8px; }
-  "))),
-  div(class = "app-header",
-      h2("Medical Data Review \u2013 Safety Dashboard"),
-      div(class = "app-sub",
-          span(class = "app-pop", sprintf("Safety N = %s", cfg$study$n_subjects_safety)),
-          sprintf("%s (%s) | FDA ST&F: %s",
-                  cfg$study$title, cfg$study$id, cfg$study$fda_stf_version))),
-  sidebarLayout(
-    sidebarPanel(
-      width = 3,
-      h4("Filters"),
-      helpText("Safety population fixed at SAFFL == 'Y'."),
-      checkboxGroupInput("arm_filter", "Treatment arms:",
-                         choices = ARM_CHOICES, selected = ARM_CHOICES),
-      hr(),
-      helpText("Teal-equivalent filter panel: arm selection applies across all modules.")
-    ),
-    mainPanel(
-      width = 9,
-      tags$head(tags$style(HTML("
-        .nav-tabs { border-bottom:2px solid #dde3e8; margin-top:12px; }
-        .nav-tabs > li > a { color:#5b6770; font-weight:500; border:none !important;
-                      background:transparent !important; padding:9px 15px; }
-        .nav-tabs > li > a:hover { color:#1f6fb2; background:#eef3f7 !important;
-                      border-radius:5px 5px 0 0; }
-        .nav-tabs > li.active > a, .nav-tabs > li.active > a:focus {
-                      color:#1f6fb2 !important; border:none !important;
-                      border-bottom:3px solid #1f6fb2 !important; background:transparent !important; }
-        .tab-content { background:#fff; border:1px solid #e3e8ec; border-top:none;
-                      padding:20px 24px 26px 24px; border-radius:0 0 8px 8px;
-                      box-shadow:0 1px 3px rgba(31,45,61,0.06); }
-        .stf-note { color:#41525f; font-size:12px; background:#eef3f8;
-                      border-left:3px solid #1f6fb2; padding:7px 11px; border-radius:4px;
-                      margin:0 0 16px 0; line-height:1.5; }
-        h4 { font-size:15px; font-weight:600; color:#1f2d3d; margin-top:8px; margin-bottom:10px; }
-        table.dataTable thead th { background:#f4f6f8; color:#1f2d3d;
-                      border-bottom:2px solid #dde3e8; font-weight:600; }
-      "))),
-      tabsetPanel(
-        type = "tabs",
+ui <- navbarPage(
+  id = "tlg_navbar",
+  title = tagList(
+    "TLG Safety Catalog",
+    tags$span(class = "brand-sub", sprintf("%s | CDISCPILOT01 ADaM", cfg$study$drug))
+  ),
+  header = tagList(
+    tags$head(tlg_catalog_css()),
+    tlg_global_header(cfg, ARM_CHOICES)
+  ),
+  windowTitle = "MDR Safety Dashboard — TLG Catalog",
 
-        tabPanel(
-          "Demographics",
-          br(),
-          div(class = "stf-note", section_label("S1")),
-          h4("Demographics and baseline characteristics"),
-          DTOutput("demo_tbl"),
-          br(),
-          div(class = "stf-note", section_label("S2")),
-          h4("Patient disposition"),
-          DTOutput("disp_tbl"),
-          br(),
-          div(class = "stf-note", section_label("S11")),
-          h4("Treatment exposure summary"),
+  tabPanel(
+    "Tables",
+    tlg_catalog_page(
+      "tlg_tables",
+      "Tables",
+      TLG_NAV$tables,
+      tagList(
+        conditionalPanel(
+          condition = "input.tlg_tables == 'dmt01'",
+          tlg_page_header("DMT01", "Demographics and Baseline Characteristics", "S1", cfg),
+          DTOutput("demo_tbl")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_tables == 'dst01'",
+          tlg_page_header("DST01", "Patient Disposition", "S2", cfg),
+          DTOutput("disp_tbl")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_tables == 'ext01'",
+          tlg_page_header("EXT01", "Study Drug Exposure", "S11", cfg),
+          h4("Exposure summary"),
           DTOutput("exposure_summary_tbl"),
           br(),
           h4("Exposure record detail (ADEX)"),
           DTOutput("exposure_detail_tbl")
         ),
-
-        tabPanel(
-          "AE Overview",
-          br(),
-          div(class = "stf-note", section_label("S3")),
-          h4("Overview of adverse events"),
-          DTOutput("ae_overview_tbl"),
-          br(),
-          div(class = "stf-note", section_label("S4")),
-          h4("Serious adverse events"),
-          DTOutput("sae_tbl")
+        conditionalPanel(
+          condition = "input.tlg_tables == 'aet01'",
+          tlg_page_header("AET01", "Safety Summary", "S3", cfg),
+          DTOutput("ae_overview_tbl")
         ),
-
-        tabPanel(
-          "TEAE Table",
-          br(),
-          div(class = "stf-note", section_label("S5")),
-          plotOutput("teae_plot", height = "460px"),
-          br(),
-          h4("Treatment-emergent AEs by SOC and preferred term (subject counts)"),
-          DTOutput("soc_pt_tbl"),
-          br(),
-          div(class = "stf-note", section_label("S5b")),
-          h4("Treatment-emergent AEs by SOC, PT and severity (AET03)"),
+        conditionalPanel(
+          condition = "input.tlg_tables == 'aet02'",
+          tlg_page_header("AET02", "Adverse Events by SOC and Preferred Term", "S5", cfg),
+          DTOutput("soc_pt_tbl")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_tables == 'aet03'",
+          tlg_page_header("AET03", "Adverse Events by Greatest Intensity", "S5b", cfg),
           DTOutput("teae_sev_tbl")
         ),
+        conditionalPanel(
+          condition = "input.tlg_tables == 'lbt04'",
+          tlg_page_header("LBT04", "Laboratory Abnormalities Not Present at Baseline", "S7", cfg),
+          selectInput("lab_param_shift", "Laboratory parameter:",
+                      choices = LAB_SHIFT_CHOICES, selected = DEFAULT_LAB),
+          helpText("Parameters with BNRIND/ANRIND shift data at post-baseline visits."),
+          DTOutput("shift_tbl")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_tables == 'cmt01'",
+          tlg_page_header("CMT01", "Concomitant Medications by Class and Preferred Name", "S13", cfg),
+          DTOutput("cm_summary_tbl")
+        )
+      )
+    )
+  ),
 
-        tabPanel(
-          "Lab Trends",
-          br(),
-          div(class = "stf-note", section_label("S6")),
+  tabPanel(
+    "Listings",
+    tlg_catalog_page(
+      "tlg_listings",
+      "Listings",
+      TLG_NAV$listings,
+      tagList(
+        conditionalPanel(
+          condition = "input.tlg_listings == 'ael03'",
+          tlg_page_header("AEL03", "Listing of Serious Adverse Events", "S4", cfg),
+          DTOutput("sae_tbl")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_listings == 'cml01'",
+          tlg_page_header("CML01", "Listing of Previous and Concomitant Medications", "S13", cfg),
+          DTOutput("cm_listing_tbl")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_listings == 'exl01'",
+          tlg_page_header("EXL01", "Listing of Exposure to Study Drug", "S11", cfg),
+          DTOutput("exposure_detail_tbl_listing")
+        )
+      )
+    )
+  ),
+
+  tabPanel(
+    "Graphs",
+    tlg_catalog_page(
+      "tlg_graphs",
+      "Graphs",
+      TLG_NAV$graphs,
+      tagList(
+        conditionalPanel(
+          condition = "input.tlg_graphs == 'lbt01'",
+          tlg_page_header("LBT01", "Laboratory Results and Change from Baseline by Visit", "S6", cfg),
+          div(class = "stf-note", "Graph analogue: LTG01 lattice plot."),
           radioButtons("lab_value_type", "Display:",
                        choices = c("Absolute value (AVAL)" = "aval",
                                    "Change from baseline (CHG)" = "chg"),
@@ -161,62 +160,76 @@ ui <- fluidPage(
                            length(unique(unlist(LAB_CHOICES))), length(LAB_CHOICES))),
           plotOutput("lab_ct_plot", height = "460px")
         ),
-
-        tabPanel(
-          "Lab Shifts",
-          br(),
-          div(class = "stf-note", section_label("S7")),
-          selectInput("lab_param_shift", "Laboratory parameter:",
-                      choices = LAB_SHIFT_CHOICES, selected = DEFAULT_LAB),
-          helpText("Parameters with BNRIND/ANRIND shift data at post-baseline visits."),
-          h4("Baseline to worst post-baseline shift (subject counts by arm)"),
-          DTOutput("shift_tbl")
-        ),
-
-        tabPanel(
-          "Hy's Law",
-          br(),
-          div(class = "stf-note", section_label("S8")),
+        conditionalPanel(
+          condition = "input.tlg_graphs == 'lbt09'",
+          tlg_page_header("LBT09", "Hepatic Safety / Hy's Law (eDISH)", "S8", cfg),
+          div(class = "stf-note", "Related TLGs: LBT10 (consecutive elevations), LBT11 (time to Hy's Law)."),
           plotOutput("hys_plot", height = "500px"),
           br(),
           h4("Subjects in the Hy's Law zone"),
           DTOutput("hys_tbl")
         ),
-
-        tabPanel(
-          "Vital Signs",
-          br(),
-          div(class = "stf-note", section_label("S12")),
+        conditionalPanel(
+          condition = "input.tlg_graphs == 'vst01'",
+          tlg_page_header("VST01", "Vital Sign Results and Change from Baseline by Visit", "S12", cfg),
           selectInput("vs_param", "Vital sign parameter:",
                       choices = VS_PARAMS,
                       selected = if (length(VS_PARAMS) > 0) VS_PARAMS[1] else NULL),
           plotOutput("vs_plot", height = "460px")
         ),
-
-        tabPanel(
-          "Concomitant Meds",
+        conditionalPanel(
+          condition = "input.tlg_graphs == 'kmg01'",
+          tlg_page_header("KMG01", "Kaplan-Meier Plot", "S10", cfg),
+          div(class = "stf-note", "Summary table analogue: TTET01."),
+          selectInput("tte_endpoint", "Time-to-event endpoint:",
+                      choices = TTE_ENDPOINTS, selected = DEFAULT_TTE),
+          plotOutput("km_plot", height = "480px"),
+          div(
+            class = "stf-note",
+            style = "margin-top:8px;",
+            p(strong("Kaplan-Meier curves by treatment arm."),
+              " Log-rank test and median time-to-event table below."),
+            p(em("Subjects without the selected event are censored at end of treatment (TRTDURD)."))
+          ),
           br(),
-          div(class = "stf-note", section_label("S13")),
-          h4("On-treatment concomitant medications summary"),
-          DTOutput("cm_summary_tbl"),
-          br(),
-          h4("Concomitant medication listing"),
-          DTOutput("cm_listing_tbl")
+          h4("Median time to event (log-rank across arms)"),
+          DTOutput("km_median")
         ),
-
-        tabPanel(
-          "Patient Profile",
+        conditionalPanel(
+          condition = "input.tlg_graphs == 'aet02g'",
+          tlg_page_header("AET02", "Top Treatment-Emergent AEs (incidence chart)", "S5", cfg),
+          plotOutput("teae_plot", height = "460px")
+        ),
+        conditionalPanel(
+          condition = "input.tlg_graphs == 'corr01'",
+          tlg_page_header("Custom", "Safety Parameter Correlation", "S14", cfg),
+          helpText(
+            "Spearman rank correlation of max post-baseline laboratory and vital sign ",
+            "values within each treatment arm (pairwise complete observations)."
+          ),
+          uiOutput("corr_plots_ui"),
           br(),
-          div(class = "stf-note", section_label("S9")),
+          h4("Correlation matrices (numeric)"),
+          uiOutput("corr_tables_ui")
+        )
+      )
+    )
+  ),
+
+  tabPanel(
+    "Patient Profile",
+    fluidRow(
+      class = "tlg-shell",
+      column(
+        12,
+        div(
+          class = "tlg-main",
+          tlg_page_header("IPPG01", "Individual Patient Plot Over Time", "S9", cfg),
           fluidRow(
             column(
               4,
               wellPanel(
-                checkboxInput(
-                  "pp_completed_only",
-                  "Completed trial only",
-                  value = FALSE
-                ),
+                checkboxInput("pp_completed_only", "Completed trial only", value = FALSE),
                 helpText(
                   sprintf("When checked, subject list is limited to %s = '%s'.",
                           cfg$patient_profile$disposition_variable,
@@ -238,9 +251,7 @@ ui <- fluidPage(
               )
             )
           ),
-          fluidRow(
-            column(12, h4("Demographics"), DTOutput("pp_demo"))
-          ),
+          fluidRow(column(12, h4("Demographics"), DTOutput("pp_demo"))),
           br(),
           h4("Laboratory results"),
           helpText("Full ADLB listing for this subject (searchable)."),
@@ -262,41 +273,6 @@ ui <- fluidPage(
           br(),
           h4("Treatment-emergent adverse event timeline"),
           DTOutput("pp_ae")
-        ),
-
-        tabPanel(
-          "Time-to-Event",
-          br(),
-          div(class = "stf-note", section_label("S10")),
-          selectInput(
-            "tte_endpoint", "Time-to-event endpoint:",
-            choices = TTE_ENDPOINTS, selected = DEFAULT_TTE
-          ),
-          plotOutput("km_plot", height = "480px"),
-          div(
-            class = "stf-note",
-            style = "margin-top:8px;",
-            p(strong("Kaplan-Meier curves by treatment arm."),
-              " Log-rank test and median time-to-event table below."),
-            p(em("Subjects without the selected event are censored at end of treatment (TRTDURD)."))
-          ),
-          br(),
-          h4("Median time to event (log-rank across arms)"),
-          DTOutput("km_median")
-        ),
-
-        tabPanel(
-          "Correlation",
-          br(),
-          div(class = "stf-note", section_label("S14")),
-          helpText(
-            "Spearman rank correlation of max post-baseline laboratory and vital sign ",
-            "values within each treatment arm (pairwise complete observations)."
-          ),
-          uiOutput("corr_plots_ui"),
-          br(),
-          h4("Correlation matrices (numeric)"),
-          uiOutput("corr_tables_ui")
         )
       )
     )
@@ -335,6 +311,9 @@ server <- function(input, output, session) {
   })
   output$exposure_detail_tbl <- renderDT({
     dt(exposure_detail_table(ADEX, ADSL, cfg, selected_arms()), searchable = FALSE)
+  })
+  output$exposure_detail_tbl_listing <- renderDT({
+    dt(exposure_detail_table(ADEX, ADSL, cfg, selected_arms()))
   })
 
   output$ae_overview_tbl <- renderDT({
@@ -541,7 +520,6 @@ server <- function(input, output, session) {
 
   output$corr_tables_ui <- renderUI({
     arms <- selected_arms()
-    codes <- .param_codes(ADLB, ADVS, corr_params()) %>% pull(.data$PARAMCD)
     tagList(lapply(arms, function(arm) {
       tagList(
         h5(arm),

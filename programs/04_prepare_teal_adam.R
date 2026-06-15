@@ -1,0 +1,141 @@
+# Prepare teal-ready ADaM datasets for the TLG Catalog teal app.
+# Run from project root: Rscript programs/04_prepare_teal_adam.R
+
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(yaml)
+  library(tern)
+})
+
+source(file.path("R", "load_data.R"))
+
+study_id <- "CDISCPILOT01"
+adam_dir <- file.path("data", "adam")
+dir.create(adam_dir, recursive = TRUE, showWarnings = FALSE)
+
+cfg <- load_config(".")
+st <- load_study_data(".", cfg)
+
+# Probe pharmaverseadam for optional domains aligned to this study.
+optional_objs <- c("adeg", "adab", "adpc", "adpp", "adqsadas", "adqscibc", "adqsnpix")
+optional_loaded <- list()
+
+if (requireNamespace("pharmaverseadam", quietly = TRUE)) {
+  for (obj in optional_objs) {
+    tryCatch({
+      data(list = obj, package = "pharmaverseadam")
+      x <- get(obj)
+      if ("STUDYID" %in% names(x)) {
+        x <- dplyr::filter(x, .data$STUDYID == study_id)
+      }
+      if (nrow(x) > 0L && "USUBJID" %in% names(x)) {
+        sl_ids <- unique(st$ADSL$USUBJID)
+        x <- dplyr::filter(x, .data$USUBJID %in% sl_ids)
+      }
+      if (nrow(x) > 0L) {
+        nm <- toupper(obj)
+        optional_loaded[[nm]] <- x
+        out <- file.path(adam_dir, paste0(nm, ".rds"))
+        saveRDS(x, out)
+        cat(" Optional", nm, ":", nrow(x), "rows ->", out, "\n")
+      }
+    }, error = function(e) invisible(NULL))
+  }
+}
+
+explicit_na_df <- function(df) {
+  if (!requireNamespace("tern", quietly = TRUE)) return(df)
+  char_cols <- names(df)[vapply(df, is.character, logical(1))]
+  if (length(char_cols) == 0L) return(df)
+  tern::df_explicit_na(df, omit_columns = setdiff(names(df), char_cols))
+}
+
+arm_levels <- unlist(cfg$display$arm_levels, use.names = FALSE)
+
+prep_adsl <- function(adsl) {
+  adsl %>%
+    filter(.data$SAFFL == "Y") %>%
+    mutate(
+      ARM = factor(.data$ARM, levels = arm_levels),
+      ACTARM = factor(.data$ARM, levels = arm_levels)
+    ) %>%
+    explicit_na_df()
+}
+
+add_ae_flags <- function(adae) {
+  adae %>%
+    mutate(
+      ARM = factor(.data$ARM, levels = arm_levels),
+      FATAL = .data$AESDTH == "Y",
+      SER = .data$AESER == "Y",
+      SEV = .data$AESEV == "SEVERE",
+      REL = !is.na(.data$AEREL) & .data$AEREL != "NONE",
+      WD = .data$AEACN == "DRUG WITHDRAWN",
+      USUBJID_AESEQ = paste(.data$USUBJID, .data$AESEQ, sep = "@@")
+    ) %>%
+    explicit_na_df()
+}
+
+prep_bds <- function(df) {
+  if (is.null(df)) return(NULL)
+  df %>%
+    mutate(ARM = factor(.data$ARM, levels = arm_levels)) %>%
+    explicit_na_df()
+}
+
+ADSL <- prep_adsl(st$ADSL)
+ADAE <- add_ae_flags(st$ADAE %>% filter(.data$TRTEMFL == "Y"))
+ADLB <- prep_bds(st$ADLB)
+ADVS <- prep_bds(st$ADVS)
+ADCM <- prep_bds(st$ADCM)
+ADEX <- prep_bds(st$ADEX)
+ADMH <- prep_bds(st$ADMH)
+ADTTE <- if (!is.null(st$ADTTE)) prep_bds(st$ADTTE) else NULL
+
+saveRDS(ADSL, file.path(adam_dir, "ADSL.rds"))
+saveRDS(ADAE, file.path(adam_dir, "ADAE.rds"))
+saveRDS(ADLB, file.path(adam_dir, "ADLB.rds"))
+saveRDS(ADVS, file.path(adam_dir, "ADVS.rds"))
+saveRDS(ADCM, file.path(adam_dir, "ADCM.rds"))
+saveRDS(ADEX, file.path(adam_dir, "ADEX.rds"))
+saveRDS(ADMH, file.path(adam_dir, "ADMH.rds"))
+if (!is.null(ADTTE)) saveRDS(ADTTE, file.path(adam_dir, "ADTTE.rds"))
+
+cat(" Teal-ready ADaM saved to data/adam/\n")
+
+inventory <- list(
+  study_id = study_id,
+  updated = as.character(Sys.time()),
+  datasets = list(
+    list(name = "ADSL", path = "data/adam/ADSL.rds", available = TRUE, rows = nrow(ADSL)),
+    list(name = "ADAE", path = "data/adam/ADAE.rds", available = TRUE, rows = nrow(ADAE)),
+    list(name = "ADLB", path = "data/adam/ADLB.rds", available = TRUE, rows = nrow(ADLB)),
+    list(name = "ADVS", path = "data/adam/ADVS.rds", available = TRUE, rows = nrow(ADVS)),
+    list(name = "ADCM", path = "data/adam/ADCM.rds", available = TRUE, rows = nrow(ADCM)),
+    list(name = "ADEX", path = "data/adam/ADEX.rds", available = TRUE, rows = nrow(ADEX)),
+    list(name = "ADMH", path = "data/adam/ADMH.rds", available = TRUE, rows = nrow(ADMH)),
+    list(name = "ADTTE", path = "data/adam/ADTTE.rds", available = !is.null(ADTTE),
+         rows = if (!is.null(ADTTE)) nrow(ADTTE) else 0L)
+  )
+)
+
+for (nm in names(optional_loaded)) {
+  inventory$datasets <- c(inventory$datasets, list(
+    list(name = nm, path = file.path("data/adam", paste0(nm, ".rds")),
+         available = TRUE, rows = nrow(optional_loaded[[nm]]),
+         source = "pharmaverseadam (study-aligned subset)")
+  ))
+}
+
+missing <- c("ADAB", "ADEG", "ADPC", "ADPP", "ADQS")
+for (nm in missing) {
+  if (!nm %in% vapply(inventory$datasets, function(x) x$name, character(1))) {
+    inventory$datasets <- c(inventory$datasets, list(
+      list(name = nm, available = FALSE, rows = 0L,
+           note = "Not available for CDISCPILOT01 in current pipeline")
+    ))
+  }
+}
+
+write_yaml(inventory, file.path("config", "dataset_inventory.yml"))
+cat(" Wrote config/dataset_inventory.yml\n")

@@ -1,0 +1,1561 @@
+version: 1.0
+source: https://github.com/insightsengineering/tlg-catalog
+study_datasets:
+- ADSL
+- ADAE
+- ADLB
+- ADEX
+- ADVS
+- ADCM
+- ADMH
+- ADTTE
+phase1_codes:
+- DMT01
+- DST01
+- EXT01
+- AET01
+- AET02
+- AET03
+- AET10
+- LBT01
+- LBT04
+- LBT09
+- VST01
+- CMT01A
+- AEL03
+- CML01
+- EXL01
+- LBL01
+- MHL01
+- KMG01
+- TTET01
+- IPPG01
+- LTG01
+entries:
+- code: ADAT01
+  category: tables
+  domain: ADA
+  title: Baseline Prevalence and Incidence of Treatment Emergent ADA
+  catalog_qmd: tables/ADA/adat01.qmd
+  required_datasets:
+  - ADAB
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: ADAT02
+  category: tables
+  domain: ADA
+  title: Summary of Patients with Treatment-Induced ADA
+  catalog_qmd: tables/ADA/adat02.qmd
+  required_datasets:
+  - ADAB
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: ADAT03
+  category: tables
+  domain: ADA
+  title: Summary of Serum Concentrations at Timepoints Where ADA Samples Were Collected
+    and Analyzed
+  catalog_qmd: tables/ADA/adat03.qmd
+  required_datasets:
+  - ADAB
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: ADAT04A
+  category: tables
+  domain: ADA
+  title: Baseline Prevalence and Incidence of Treatment Emergent NAbs
+  catalog_qmd: tables/ADA/adat04a.qmd
+  required_datasets:
+  - ADAB
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: ADAT04B
+  category: tables
+  domain: ADA
+  title: Baseline Prevalence and Incidence of NAbs
+  catalog_qmd: tables/ADA/adat04b.qmd
+  required_datasets:
+  - ADAB
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: AET01
+  category: tables
+  domain: adverse-events
+  title: Safety Summary
+  catalog_qmd: tables/adverse-events/aet01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: teal_module
+  teal_fn: tm_t_events_summary
+  status: ready
+- code: AET01_AESI
+  category: tables
+  domain: adverse-events
+  title: Safety Summary (Adverse Events of Special Interest)
+  catalog_qmd: tables/adverse-events/aet01_aesi.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET02
+  category: tables
+  domain: adverse-events
+  title: Adverse Events
+  catalog_qmd: tables/adverse-events/aet02.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: teal_module
+  teal_fn: tm_t_events
+  status: ready
+- code: AET02_SMQ
+  category: tables
+  domain: adverse-events
+  title: Adverse Events by Standardized MedDRA Query
+  catalog_qmd: tables/adverse-events/aet02_smq.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET03
+  category: tables
+  domain: adverse-events
+  title: Adverse Events by Greatest Intensity
+  catalog_qmd: tables/adverse-events/aet03.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: teal_module
+  teal_fn: tm_t_events_by_grade
+  status: ready
+- code: AET04
+  category: tables
+  domain: adverse-events
+  title: Adverse Events by Highest NCI CTCAE Grade
+  catalog_qmd: tables/adverse-events/aet04.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET04_PI
+  category: tables
+  domain: adverse-events
+  title: Adverse Events Reported in >= 10% of Patients by Highest NCI CTCAE Grade
+  catalog_qmd: tables/adverse-events/aet04_pi.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET05
+  category: tables
+  domain: adverse-events
+  title: Adverse Event Rate Adjusted for Patient-Years at Risk - First Occurrence
+  catalog_qmd: tables/adverse-events/aet05.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET05_ALL
+  category: tables
+  domain: adverse-events
+  title: Adverse Event Rate Adjusted for Patient-Years at Risk - All Occurrences
+  catalog_qmd: tables/adverse-events/aet05_all.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET06
+  category: tables
+  domain: adverse-events
+  title: Adverse Events by Baseline Characteristic
+  catalog_qmd: tables/adverse-events/aet06.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET06_SMQ
+  category: tables
+  domain: adverse-events
+  title: Adverse Events by Baseline Characteristic, by SMQ and Preferred Term
+  catalog_qmd: tables/adverse-events/aet06_smq.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET07
+  category: tables
+  domain: adverse-events
+  title: Adverse Events Resulting in Death
+  catalog_qmd: tables/adverse-events/aet07.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET09
+  category: tables
+  domain: adverse-events
+  title: Adverse Events Related to Study Drug
+  catalog_qmd: tables/adverse-events/aet09.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET09_SMQ
+  category: tables
+  domain: adverse-events
+  title: Adverse Events Related to Study Drug by Standardized MedDRA Query
+  catalog_qmd: tables/adverse-events/aet09_smq.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AET10
+  category: tables
+  domain: adverse-events
+  title: Most Common (>= 5%) Adverse Events
+  catalog_qmd: tables/adverse-events/aet10.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: teal_module
+  teal_fn: tm_t_events
+  status: ready
+- code: CMT01
+  category: tables
+  domain: concomitant-medications
+  title: Concomitant Medications (GNEDrug Legacy Coding)
+  catalog_qmd: tables/concomitant-medications/cmt01.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: CMT01A
+  category: tables
+  domain: concomitant-medications
+  title: Concomitant Medications by Medication Class and Preferred Name
+  catalog_qmd: tables/concomitant-medications/cmt01a.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: teal_module
+  teal_fn: tm_t_summary
+  status: ready
+- code: CMT01B
+  category: tables
+  domain: concomitant-medications
+  title: Concomitant Medications by Medication Class and Preferred Name
+  catalog_qmd: tables/concomitant-medications/cmt01b.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: CMT02_PT
+  category: tables
+  domain: concomitant-medications
+  title: Concomitant Medications by Preferred Name (WHODrug Coding)
+  catalog_qmd: tables/concomitant-medications/cmt02_pt.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: DTHT01
+  category: tables
+  domain: deaths
+  title: Deaths
+  catalog_qmd: tables/deaths/dtht01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: DMT01
+  category: tables
+  domain: demography
+  title: Demographics and Baseline Characteristics
+  catalog_qmd: tables/demography/dmt01.qmd
+  required_datasets:
+  - ADSL
+  implementation: teal_module
+  teal_fn: tm_t_summary
+  status: ready
+- code: DISCLOSUREST01
+  category: tables
+  domain: disclosures
+  title: Disclosures Outputs
+  catalog_qmd: tables/disclosures/disclosurest01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: EUDRAT01
+  category: tables
+  domain: disclosures
+  title: Non-Serious Adverse Events Reported in >= 5% of Patients in Any Treatment
+    Group - Patients and Events
+  catalog_qmd: tables/disclosures/eudrat01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: EUDRAT02
+  category: tables
+  domain: disclosures
+  title: Serious Adverse Events, Fatal Serious Adverse Events, and Serious Adverse
+    Events Related to Study Medication
+  catalog_qmd: tables/disclosures/eudrat02.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: DST01
+  category: tables
+  domain: disposition
+  title: Patient Disposition
+  catalog_qmd: tables/disposition/dst01.qmd
+  required_datasets:
+  - ADSL
+  implementation: tern_layout
+  teal_fn: tern_layout
+  status: ready
+- code: PDT01
+  category: tables
+  domain: disposition
+  title: Major Protocol Deviations
+  catalog_qmd: tables/disposition/pdt01.qmd
+  required_datasets:
+  - ADSL
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: PDT02
+  category: tables
+  domain: disposition
+  title: Major Protocol Deviations Related to Epidemic/Pandemic
+  catalog_qmd: tables/disposition/pdt02.qmd
+  required_datasets:
+  - ADSL
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: EGT01
+  category: tables
+  domain: ECG
+  title: ECG Results and Change from Baseline by Visit
+  catalog_qmd: tables/ECG/egt01.qmd
+  required_datasets:
+  - ADSL
+  - ADEG
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: EGT02
+  category: tables
+  domain: ECG
+  title: ECG Abnormalities (EGT02_1 & EGT02_2)
+  catalog_qmd: tables/ECG/egt02.qmd
+  required_datasets:
+  - ADSL
+  - ADEG
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: EGT03
+  category: tables
+  domain: ECG
+  title: Shift Table of ECG Interval Data - Baseline Versus Minimum/Maximum Post-Baseline
+  catalog_qmd: tables/ECG/egt03.qmd
+  required_datasets:
+  - ADSL
+  - ADEG
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: EGT04
+  category: tables
+  domain: ECG
+  title: Shift Table of Qualitative ECG Assessments
+  catalog_qmd: tables/ECG/egt04.qmd
+  required_datasets:
+  - ADSL
+  - ADEG
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: EGT05_QTCAT
+  category: tables
+  domain: ECG
+  title: ECG Actual Values and Changes from Baseline by Visit
+  catalog_qmd: tables/ECG/egt05_qtcat.qmd
+  required_datasets:
+  - ADSL
+  - ADEG
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: AOVT01
+  category: tables
+  domain: efficacy
+  title: ANCOVA for Multiple End Points
+  catalog_qmd: tables/efficacy/aovt01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: AOVT02
+  category: tables
+  domain: efficacy
+  title: ANCOVA with Single End Point and Customized Table
+  catalog_qmd: tables/efficacy/aovt02.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: AOVT03
+  category: tables
+  domain: efficacy
+  title: ANCOVA with Consideration of Interaction
+  catalog_qmd: tables/efficacy/aovt03.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: CFBT01
+  category: tables
+  domain: efficacy
+  title: Efficacy Data and Change from Baseline by Visit
+  catalog_qmd: tables/efficacy/cfbt01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: CMHT01
+  category: tables
+  domain: efficacy
+  title: Cochran-Mantel-Haenszel (CMH) Summary
+  catalog_qmd: tables/efficacy/cmht01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: COXT01
+  category: tables
+  domain: efficacy
+  title: Cox Regression
+  catalog_qmd: tables/efficacy/coxt01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: COXT02
+  category: tables
+  domain: efficacy
+  title: Multivariable Cox Regression
+  catalog_qmd: tables/efficacy/coxt02.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: DORT01
+  category: tables
+  domain: efficacy
+  title: Duration of Response
+  catalog_qmd: tables/efficacy/dort01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: LGRT02
+  category: tables
+  domain: efficacy
+  title: Multi-Variable Logistic Regression
+  catalog_qmd: tables/efficacy/lgrt02.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: MMRMT01
+  category: tables
+  domain: efficacy
+  title: Tables for Mixed-Effect Model Repeated Measures Analysis
+  catalog_qmd: tables/efficacy/mmrmt01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: ONCT05
+  category: tables
+  domain: efficacy
+  title: Objective Response Rate by Subgroup
+  catalog_qmd: tables/efficacy/onct05.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: RATET01
+  category: tables
+  domain: efficacy
+  title: Event Rate Summary for Recurrent Events
+  catalog_qmd: tables/efficacy/ratet01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: RBMIT01
+  category: tables
+  domain: efficacy
+  title: Tables for RBMI
+  catalog_qmd: tables/efficacy/rbmit01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: RSPT01
+  category: tables
+  domain: efficacy
+  title: Best Overall Response
+  catalog_qmd: tables/efficacy/rspt01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: TTET01
+  category: tables
+  domain: efficacy
+  title: Time-To-Event Summary
+  catalog_qmd: tables/efficacy/ttet01.qmd
+  required_datasets:
+  - ADSL
+  - ADTTE
+  implementation: teal_module
+  teal_fn: tm_t_tte
+  status: ready
+- code: EXT01
+  category: tables
+  domain: exposure
+  title: Study Drug Exposure Table
+  catalog_qmd: tables/exposure/ext01.qmd
+  required_datasets:
+  - ADSL
+  - ADEX
+  implementation: teal_module
+  teal_fn: tm_t_exposure
+  status: ready
+- code: LBT01
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Results and Change from Baseline by Visit
+  catalog_qmd: tables/lab-results/lbt01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: teal_module
+  teal_fn: tm_g_lineplot
+  status: ready
+- code: LBT02
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Results by Visit
+  catalog_qmd: tables/lab-results/lbt02.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT03
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Results Change from Baseline by Visit
+  catalog_qmd: tables/lab-results/lbt03.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT04
+  category: tables
+  domain: lab-results
+  title: Laboratory Abnormalities Not Present at Baseline
+  catalog_qmd: tables/lab-results/lbt04.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: teal_module
+  teal_fn: tm_t_shift_by_arm
+  status: ready
+- code: LBT05
+  category: tables
+  domain: lab-results
+  title: Laboratory Abnormalities with Single and Replicated Marked
+  catalog_qmd: tables/lab-results/lbt05.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT06
+  category: tables
+  domain: lab-results
+  title: Laboratory Abnormalities by Visit and Baseline Status
+  catalog_qmd: tables/lab-results/lbt06.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT07
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Results with Highest NCI CTCAE Grade Post-Baseline
+  catalog_qmd: tables/lab-results/lbt07.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT08
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Results with Highest NCI CTCAE Grade at Any Time
+  catalog_qmd: tables/lab-results/lbt08.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT09
+  category: tables
+  domain: lab-results
+  title: Liver Laboratory Tests - Patients with Elevated Post-Baseline AST or ALT
+    Levels
+  catalog_qmd: tables/lab-results/lbt09.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: tern_layout
+  status: ready
+- code: LBT10
+  category: tables
+  domain: lab-results
+  title: Liver Laboratory Tests - Patients with Elevated Post-Baseline AST or ALT
+    Levels at Two Consecutive Visits (with Respect to ULN)
+  catalog_qmd: tables/lab-results/lbt10.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT10_BL
+  category: tables
+  domain: lab-results
+  title: Liver Laboratory Tests - Patients with Elevated Post-Baseline AST or ALT
+    Levels at Two Consecutive Visits (with Respect to Baseline)
+  catalog_qmd: tables/lab-results/lbt10_bl.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT11
+  category: tables
+  domain: lab-results
+  title: Time to First Increase in Liver Laboratory Test Result Meeting Hy's Law Laboratory
+    Criteria (with Respect to ULN)
+  catalog_qmd: tables/lab-results/lbt11.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT11_BL
+  category: tables
+  domain: lab-results
+  title: Time to First Increase in Liver Laboratory Test Result Meeting Hy's Law Laboratory
+    Criteria (with Respect to Baseline)
+  catalog_qmd: tables/lab-results/lbt11_bl.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT12
+  category: tables
+  domain: lab-results
+  title: Liver Laboratory Tests by Time on Treatment - Patients with Elevated Post-Baseline
+    AST or ALT Levels (with Respect to ULN)
+  catalog_qmd: tables/lab-results/lbt12.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT12_BL
+  category: tables
+  domain: lab-results
+  title: Liver Laboratory Tests by Time on Treatment - Patients with Elevated Post-Baseline
+    AST or ALT Levels (with Respect to Baseline)
+  catalog_qmd: tables/lab-results/lbt12_bl.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT13
+  category: tables
+  domain: lab-results
+  title: NCI CTCAE Grade Laboratory Abnormalities by Visit and Baseline Grade
+  catalog_qmd: tables/lab-results/lbt13.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT14
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Results Shift Table - Highest NCI CTCAE Grade Post-Baseline
+    by Baseline NCI CTCAE Grade
+  catalog_qmd: tables/lab-results/lbt14.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBT15
+  category: tables
+  domain: lab-results
+  title: Laboratory Test Shifts to NCI CTCAE Grade 3-4 Post-Baseline
+  catalog_qmd: tables/lab-results/lbt15.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: MHT01
+  category: tables
+  domain: medical-history
+  title: Medical History
+  catalog_qmd: tables/medical-history/mht01.qmd
+  required_datasets:
+  - ADSL
+  - ADMH
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: PKCT01
+  category: tables
+  domain: pharmacokinetic
+  title: Summary Concentration Table
+  catalog_qmd: tables/pharmacokinetic/pkct01.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT02
+  category: tables
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Summary - Plasma/Serum/Blood PK Parameters (Stats
+    in Rows)
+  catalog_qmd: tables/pharmacokinetic/pkpt02.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT03
+  category: tables
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Summary of Plasma by Treatment (Stats in Columns)
+  catalog_qmd: tables/pharmacokinetic/pkpt03.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT04
+  category: tables
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Summary - Urine PK Parameters (Stats in Rows)
+  catalog_qmd: tables/pharmacokinetic/pkpt04.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT05
+  category: tables
+  domain: pharmacokinetic
+  title: Summary of Urinary PK Parameters by Treatment Arm (Stats in Columns)
+  catalog_qmd: tables/pharmacokinetic/pkpt05.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT06
+  category: tables
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Summary - Dose-Normalized PK Parameters (Stats
+    in Rows)
+  catalog_qmd: tables/pharmacokinetic/pkpt06.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT07
+  category: tables
+  domain: pharmacokinetic
+  title: Table of Mean Dose-Normalized Selected Pharmacokinetic Parameters (Stats
+    in Columns)
+  catalog_qmd: tables/pharmacokinetic/pkpt07.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT08
+  category: tables
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Summary of Cumulative Amount of Drug Eliminated
+    and Cumulative Percentage of Drug Recovered (Stats in Columns)
+  catalog_qmd: tables/pharmacokinetic/pkpt08.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPT11
+  category: tables
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Estimated Ratios of Geometric Means and 90% Confidence
+    Intervals for AUC and CMAX
+  catalog_qmd: tables/pharmacokinetic/pkpt11.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: RMPT01
+  category: tables
+  domain: risk-management-plan
+  title: Duration of Exposure for Risk Management Plan
+  catalog_qmd: tables/risk-management-plan/rmpt01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: RMPT03
+  category: tables
+  domain: risk-management-plan
+  title: Extent of Exposure by Age Group and Gender for Risk Management Plan
+  catalog_qmd: tables/risk-management-plan/rmpt03.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: RMPT04
+  category: tables
+  domain: risk-management-plan
+  title: Extent of Exposure by Ethnic Origin for Risk Management Plan
+  catalog_qmd: tables/risk-management-plan/rmpt04.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: RMPT05
+  category: tables
+  domain: risk-management-plan
+  title: Extent of Exposure by Race for Risk Management Plan
+  catalog_qmd: tables/risk-management-plan/rmpt05.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: RMPT06
+  category: tables
+  domain: risk-management-plan
+  title: Seriousness, Outcomes, Severity, Frequency with 95% CI for Risk Management
+    Plan
+  catalog_qmd: tables/risk-management-plan/rmpt06.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: ENTXX
+  category: tables
+  domain: safety
+  title: Enrollment Variants
+  catalog_qmd: tables/safety/enrollment01.qmd
+  required_datasets:
+  - ADSL
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: VST01
+  category: tables
+  domain: vital-signs
+  title: Vital Sign Results and Change from Baseline by Visit
+  catalog_qmd: tables/vital-signs/vst01.qmd
+  required_datasets:
+  - ADSL
+  - ADVS
+  implementation: teal_module
+  teal_fn: tm_g_lineplot
+  status: ready
+- code: VST02
+  category: tables
+  domain: vital-signs
+  title: Vital Sign Abnormalities
+  catalog_qmd: tables/vital-signs/vst02.qmd
+  required_datasets:
+  - ADSL
+  - ADVS
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: ADAL02
+  category: listings
+  domain: ADA
+  title: Listing of Anti-Drug Antibody Data for Treatment Emergent ADA Positive Patients
+  catalog_qmd: listings/ADA/adal02.qmd
+  required_datasets:
+  - ADAB
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: AEL01
+  category: listings
+  domain: adverse-events
+  title: Listing of Preferred Terms, Lowest Level Terms, and Investigator-Specified
+    Adverse Event Terms
+  catalog_qmd: listings/adverse-events/ael01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AEL01_NOLLT
+  category: listings
+  domain: adverse-events
+  title: Listing of Preferred Terms and Investigator-Specified Adverse Event Terms
+  catalog_qmd: listings/adverse-events/ael01_nollt.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AEL02
+  category: listings
+  domain: adverse-events
+  title: Listing of Adverse Events
+  catalog_qmd: listings/adverse-events/ael02.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AEL02_ED
+  category: listings
+  domain: adverse-events
+  title: Listing of Adverse Events (for Early Development Studies)
+  catalog_qmd: listings/adverse-events/ael02_ed.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: AEL03
+  category: listings
+  domain: adverse-events
+  title: Listing of Serious Adverse Events
+  catalog_qmd: listings/adverse-events/ael03.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: teal_module
+  teal_fn: tm_t_listings
+  status: ready
+- code: AEL04
+  category: listings
+  domain: adverse-events
+  title: Listing of Patient Deaths
+  catalog_qmd: listings/adverse-events/ael04.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: CML01
+  category: listings
+  domain: concomitant-medications
+  title: Listing of Previous and Concomitant Medications
+  catalog_qmd: listings/concomitant-medications/cml01.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: teal_module
+  teal_fn: tm_t_listings
+  status: ready
+- code: CML02A_GL
+  category: listings
+  domain: concomitant-medications
+  title: Listing of Concomitant Medication Class Level 2, Preferred Name, and Investigator-Specified
+    Terms
+  catalog_qmd: listings/concomitant-medications/cml02a_gl.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: CML02B_GL
+  category: listings
+  domain: concomitant-medications
+  title: Listing of Concomitant Medication Class, Preferred Name, and Investigator-Specified
+    Terms
+  catalog_qmd: listings/concomitant-medications/cml02b_gl.qmd
+  required_datasets:
+  - ADSL
+  - ADCM
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: DSL01
+  category: listings
+  domain: disposition
+  title: Listing of Patients with Study Drug Withdrawn Due to Adverse Events
+  catalog_qmd: listings/disposition/dsl01.qmd
+  required_datasets:
+  - ADSL
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: DSL02
+  category: listings
+  domain: disposition
+  title: Listing of Patients Who Discontinued Early from Study
+  catalog_qmd: listings/disposition/dsl02.qmd
+  required_datasets:
+  - ADSL
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: DSUR4
+  category: listings
+  domain: development-safety-update-report
+  title: Listing of Patients Who Died During Reporting Period
+  catalog_qmd: listings/development-safety-update-report/dsur4.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: EGL01
+  category: listings
+  domain: ECG
+  title: 'Listing of ECG Data: Safety-Evaluable Patients'
+  catalog_qmd: listings/ECG/egl01.qmd
+  required_datasets:
+  - ADSL
+  - ADEG
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: EXL01
+  category: listings
+  domain: exposure
+  title: Listing of Exposure to Study Drug
+  catalog_qmd: listings/exposure/exl01.qmd
+  required_datasets:
+  - ADSL
+  - ADEX
+  implementation: teal_module
+  teal_fn: tm_t_listings
+  status: ready
+- code: LBL01
+  category: listings
+  domain: lab-results
+  title: Listing of Laboratory Test Results
+  catalog_qmd: listings/lab-results/lbl01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: teal_module
+  teal_fn: tm_t_listings
+  status: ready
+- code: LBL01_RLS
+  category: listings
+  domain: lab-results
+  title: Listing of Laboratory Test Results Using Roche Safety Lab Standardization
+  catalog_qmd: listings/lab-results/lbl01_rls.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBL02A
+  category: listings
+  domain: lab-results
+  title: Listing of Laboratory Abnormalities (constant units)
+  catalog_qmd: listings/lab-results/lbl02a.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBL02A_RLS
+  category: listings
+  domain: lab-results
+  title: Listing of Laboratory Abnormalities Defined by Roche Safety Lab Standardization
+  catalog_qmd: listings/lab-results/lbl02a_rls.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: LBL02B
+  category: listings
+  domain: lab-results
+  title: Listing of Laboratory Abnormalities (variable units)
+  catalog_qmd: listings/lab-results/lbl02b.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: MHL01
+  category: listings
+  domain: medical-history
+  title: Listing of Medical History and Concurrent Diseases
+  catalog_qmd: listings/medical-history/mhl01.qmd
+  required_datasets:
+  - ADSL
+  - ADMH
+  implementation: teal_module
+  teal_fn: tm_t_listings
+  status: ready
+- code: PKCL01
+  category: listings
+  domain: pharmacokinetic
+  title: Listing of Drug A Concentration by Treatment Group, Patient and Nominal Time
+  catalog_qmd: listings/pharmacokinetic/pkcl01.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKCL02
+  category: listings
+  domain: pharmacokinetic
+  title: Listing of Drug A Urine Concentration and Volumes
+  catalog_qmd: listings/pharmacokinetic/pkcl02.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPL01
+  category: listings
+  domain: pharmacokinetic
+  title: Listing of Drug A Plasma PK Parameters
+  catalog_qmd: listings/pharmacokinetic/pkpl01.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPL02
+  category: listings
+  domain: pharmacokinetic
+  title: Listing of Drug A Urine PK Parameters
+  catalog_qmd: listings/pharmacokinetic/pkpl02.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPL04
+  category: listings
+  domain: pharmacokinetic
+  title: Listing of Individual Drug A AUCIFO and CMAX Ratios Following Drug A or Drug
+    B
+  catalog_qmd: listings/pharmacokinetic/pkpl04.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: VSL01
+  category: listings
+  domain: vital-signs
+  title: 'Listing of Vital Signs: Safety-Evaluable Patients'
+  catalog_qmd: listings/vital-signs/vsl01.qmd
+  required_datasets:
+  - ADSL
+  - ADVS
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: FSTG01
+  category: graphs
+  domain: efficacy
+  title: Subgroup Analysis of Best Overall Response
+  catalog_qmd: graphs/efficacy/fstg01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: FSTG02
+  category: graphs
+  domain: efficacy
+  title: Subgroup Analysis of Survival Duration
+  catalog_qmd: graphs/efficacy/fstg02.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: KMG01
+  category: graphs
+  domain: efficacy
+  title: Kaplan-Meier Plot
+  catalog_qmd: graphs/efficacy/kmg01.qmd
+  required_datasets:
+  - ADSL
+  - ADTTE
+  implementation: teal_module
+  teal_fn: tm_g_km
+  status: ready
+- code: MMRMG01
+  category: graphs
+  domain: efficacy
+  title: Plots for Mixed-Effect Model Repeated Measures Analysis
+  catalog_qmd: graphs/efficacy/mmrmg01.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: MMRMG02
+  category: graphs
+  domain: efficacy
+  title: Forest Plot for Mixed-Effect Model Repeated Measures
+  catalog_qmd: graphs/efficacy/mmrmg02.qmd
+  required_datasets:
+  - ADSL
+  - ADQS
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKCG01
+  category: graphs
+  domain: pharmacokinetic
+  title: Plot of PK Concentration Over Time by Subject
+  catalog_qmd: graphs/pharmacokinetic/pkcg01.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKCG02
+  category: graphs
+  domain: pharmacokinetic
+  title: Plot of PK Concentration Over Time by Cohort/Treatment Group/Dose
+  catalog_qmd: graphs/pharmacokinetic/pkcg02.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKCG03
+  category: graphs
+  domain: pharmacokinetic
+  title: Plot of Mean PK Concentration Over Time by Cohort
+  catalog_qmd: graphs/pharmacokinetic/pkcg03.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPG01
+  category: graphs
+  domain: pharmacokinetic
+  title: Plot of Mean Cumulative Percentage (%) of Recovered Drug in Urine
+  catalog_qmd: graphs/pharmacokinetic/pkpg01.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPG02
+  category: graphs
+  domain: pharmacokinetic
+  title: Pharmacokinetic Parameter Summary of Serum PK Parameters by Treatment
+  catalog_qmd: graphs/pharmacokinetic/pkpg02.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPG03
+  category: graphs
+  domain: pharmacokinetic
+  title: Box Plot of Pharmacokinetic Parameters by Visit - Plasma
+  catalog_qmd: graphs/pharmacokinetic/pkpg03.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPG04
+  category: graphs
+  domain: pharmacokinetic
+  title: Box Plot of Pharmacokinetic Parameters by Visit - Plasma
+  catalog_qmd: graphs/pharmacokinetic/pkpg04.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: PKPG06
+  category: graphs
+  domain: pharmacokinetic
+  title: Boxplot of Metabolite to Parent Ratios by Treatment
+  catalog_qmd: graphs/pharmacokinetic/pkpg06.qmd
+  required_datasets:
+  - ADSL
+  - ADPC
+  - ADPP
+  implementation: unavailable
+  teal_fn: .na.character
+  status: needs_domain
+- code: BRG01
+  category: graphs
+  domain: other
+  title: Bar Chart
+  catalog_qmd: graphs/other/brg01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  - ADVS
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: BWG01
+  category: graphs
+  domain: other
+  title: Box Plot
+  catalog_qmd: graphs/other/bwg01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  - ADVS
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: CIG01
+  category: graphs
+  domain: other
+  title: Confidence Interval Plot
+  catalog_qmd: graphs/other/cig01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  - ADVS
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
+- code: IPPG01
+  category: graphs
+  domain: other
+  title: Individual Patient Plot Over Time
+  catalog_qmd: graphs/other/ippg01.qmd
+  required_datasets:
+  - ADSL
+  - ADAE
+  - ADLB
+  - ADVS
+  - ADCM
+  - ADMH
+  implementation: teal_module
+  teal_fn: tm_g_pp_patient_timeline
+  status: ready
+- code: LTG01
+  category: graphs
+  domain: other
+  title: Lattice Plot of Laboratory Tests by Treatment Group Over Time
+  catalog_qmd: graphs/other/ltg01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  implementation: teal_module
+  teal_fn: tm_g_lineplot
+  status: ready
+- code: MNG01
+  category: graphs
+  domain: other
+  title: Mean Plot
+  catalog_qmd: graphs/other/mng01.qmd
+  required_datasets:
+  - ADSL
+  - ADLB
+  - ADVS
+  - ADAE
+  implementation: tern_layout
+  teal_fn: .na.character
+  status: needs_derivation
