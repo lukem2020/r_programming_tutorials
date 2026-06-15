@@ -651,7 +651,7 @@ entries:
   - ADSL
   - ADLB
   implementation: teal_module
-  teal_fn: tm_t_shift_by_arm
+  teal_fn: tm_t_abnormality
   status: ready
 - code: LBT05
   category: tables

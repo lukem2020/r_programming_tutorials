@@ -69,7 +69,7 @@ tlg_teal_module <- function(entry, cfg) {
       dataname = "ADEX",
       col_by_var = arm,
       row_by_var = teal.transform::choices_selected(
-        teal.transform::variable_choices("ADEX", c("RACE", "SEX", "REGION1")),
+        teal.transform::variable_choices("ADEX", subset = c("RACE", "SEX", "REGION1")),
         "RACE"
       ),
       paramcd = teal.transform::choices_selected(
@@ -79,6 +79,14 @@ tlg_teal_module <- function(entry, cfg) {
       parcat = teal.transform::choices_selected(
         teal.transform::value_choices("ADEX", "PARCAT1"),
         "OVERALL"
+      ),
+      aval_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADEX", subset = "AVAL"),
+        "AVAL"
+      ),
+      avalu_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADEX", subset = "AVALU"),
+        "AVALU"
       ),
       add_total = FALSE
     ),
@@ -145,29 +153,19 @@ tlg_teal_module <- function(entry, cfg) {
       param = teal.transform::choices_selected(teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"), "ALT"),
       transformators = lineplot_scheduled("ADLB")
     ),
-    LBT04 = teal.modules.clinical::tm_t_shift_by_arm(
+    LBT04 = teal.modules.clinical::tm_t_abnormality(
       label = label,
       dataname = "ADLB",
       arm_var = arm,
-      paramcd = teal.transform::choices_selected(
-        teal.transform::value_choices("ADLB", "PARAMCD", "PARAM"),
-        "ALT"
-      ),
-      visit_var = teal.transform::choices_selected(
-        teal.transform::value_choices("ADLB", "AVISIT"),
-        "POST-BASELINE MINIMUM"
-      ),
-      aval_var = teal.transform::choices_selected(
-        teal.transform::variable_choices("ADLB", subset = "ANRIND"),
-        "ANRIND",
-        fixed = TRUE
-      ),
-      baseline_var = teal.transform::choices_selected(
-        teal.transform::variable_choices("ADLB", subset = "BNRIND"),
-        "BNRIND",
-        fixed = TRUE
-      ),
-      useNA = "ifany"
+      by_vars = teal.transform::choices_selected("PARAM", "PARAM", keep_order = TRUE),
+      grade = teal.transform::choices_selected("ANRIND", "ANRIND", fixed = TRUE),
+      baseline_var = teal.transform::choices_selected("BNRIND", "BNRIND", fixed = TRUE),
+      treatment_flag_var = teal.transform::choices_selected("ONTRTFL", "ONTRTFL", fixed = TRUE),
+      treatment_flag = teal.transform::choices_selected("Y"),
+      abnormal = list(low = "LOW", high = "HIGH"),
+      exclude_base_abn = TRUE,
+      add_total = TRUE,
+      transformators = abnormality_transformators("ADLB")
     ),
     VST01 = teal.modules.clinical::tm_g_lineplot(
       label = label,
@@ -179,12 +177,17 @@ tlg_teal_module <- function(entry, cfg) {
       paramcd = teal.transform::choices_selected(teal.transform::variable_choices("ADVS", subset = "PARAMCD"), "PARAMCD"),
       param = teal.transform::choices_selected(teal.transform::value_choices("ADVS", "PARAMCD", "PARAM"), "SYSBP")
     ),
-    CMT01A = teal.modules.clinical::tm_t_summary(
+    CMT01A = teal.modules.clinical::tm_t_events(
       label = label,
       dataname = "ADCM",
       arm_var = arm,
-      summarize_vars = teal.transform::choices_selected(c("CMDECOD", "CMCLAS", "CMTRT"), "CMDECOD"),
-      useNA = "ifany"
+      hlt = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADCM", subset = "CMCLAS"),
+        "CMCLAS"
+      ),
+      llt = teal.transform::choices_selected("CMDECOD", "CMDECOD"),
+      add_total = TRUE,
+      event_type = "treatment"
     ),
     AEL03 = tlg_listing_module(
       entry, "ADAE",
@@ -274,14 +277,8 @@ tlg_teal_module <- function(entry, cfg) {
         teal.transform::variable_choices("ADAE", subset = "AENDTM"),
         "AENDTM"
       ),
-      dstime_start = teal.transform::choices_selected(
-        teal.transform::variable_choices("ADCM", subset = "ASTDTM"),
-        "ASTDTM"
-      ),
-      dstime_end = teal.transform::choices_selected(
-        teal.transform::variable_choices("ADCM", subset = "AENDTM"),
-        "AENDTM"
-      ),
+      dstime_start = teal.transform::choices_selected("CMASTDTM", "CMASTDTM", fixed = TRUE),
+      dstime_end = teal.transform::choices_selected("CMAENDTM", "CMAENDTM", fixed = TRUE),
       aerelday_start = teal.transform::choices_selected(
         teal.transform::variable_choices("ADAE", subset = "ASTDY"),
         "ASTDY"

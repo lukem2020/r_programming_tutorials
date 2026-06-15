@@ -15,7 +15,19 @@ load_teal_dataset <- function(root, cfg, nm) {
   if (!file.exists(path)) return(NULL)
   df <- readRDS(path)
   if (nm == "ADTTE" && !"AVALU" %in% names(df)) df$AVALU <- "DAY"
-  if (nm %in% c("ADLB", "ADVS")) df <- add_bds_avalu(df)
+  if (nm == "ADEX") {
+    df <- prep_adex_for_teal(df)
+  } else if (nm == "ADLB") {
+    df <- add_bds_avalu(df)
+    df <- prep_teal_arm_factor(df, cfg)
+    df <- adlb_tern_chars(df)
+  } else if (nm == "ADVS") {
+    df <- add_bds_avalu(df)
+  } else if (nm == "ADCM") {
+    df <- prep_adcm_for_teal(df)
+    df <- prep_teal_arm_factor(df, cfg)
+  }
+  if (nm == "ADSL") df <- prep_teal_arm_factor(df, cfg)
   trim_teal_dataset(df, nm, cfg)
 }
 

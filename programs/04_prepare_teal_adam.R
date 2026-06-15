@@ -76,18 +76,38 @@ add_ae_flags <- function(adae) {
     explicit_na_df()
 }
 
+prep_adcm <- function(adcm) {
+  adcm %>%
+    mutate(
+      ARM = factor(.data$ARM, levels = arm_levels),
+      CMASTDTM = .data$ASTDTM,
+      CMAENDTM = .data$AENDTM
+    ) %>%
+    explicit_na_df()
+}
+
+prep_bds_abnormality_chars <- function(df) {
+  if (is.null(df) || !requireNamespace("tern", quietly = TRUE)) return(df)
+  cols <- intersect(
+    c("ANRIND", "BNRIND", "AVISIT", "PARAM", "LBCAT", "ONTRTFL", "ABLFL", "PARAMCD", "ARM"),
+    names(df)
+  )
+  if (length(cols) == 0L) return(df)
+  tern::df_explicit_na(df, omit_columns = setdiff(names(df), cols))
+}
+
 prep_bds <- function(df, skip_explicit_na = FALSE) {
   if (is.null(df)) return(NULL)
   out <- df %>%
     mutate(ARM = factor(.data$ARM, levels = arm_levels))
-  if (skip_explicit_na) out else explicit_na_df(out)
+  if (skip_explicit_na) prep_bds_abnormality_chars(out) else explicit_na_df(out)
 }
 
 ADSL <- prep_adsl(st$ADSL)
 ADAE <- add_ae_flags(st$ADAE %>% filter(.data$TRTEMFL == "Y"))
 ADLB <- prep_bds(st$ADLB, skip_explicit_na = TRUE)
 ADVS <- prep_bds(st$ADVS, skip_explicit_na = TRUE)
-ADCM <- prep_bds(st$ADCM)
+ADCM <- prep_adcm(st$ADCM)
 ADEX <- prep_bds(st$ADEX)
 ADMH <- prep_bds(st$ADMH)
 ADTTE <- if (!is.null(st$ADTTE)) prep_bds(st$ADTTE) else NULL

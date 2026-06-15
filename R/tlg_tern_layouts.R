@@ -16,7 +16,7 @@ tern_table_module <- function(entry, build_fun, datanames = "ADSL") {
         output$table <- renderUI({
           df <- data()
           tbl <- build_fun(df)
-          formatters::table_inset(tbl, colgap = "5px")
+          formatters::table_inset(tbl)
         })
       })
     },
