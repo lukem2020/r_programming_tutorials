@@ -98,3 +98,92 @@ patch_manifest_from_lockfile <- function(manifest_path, lockfile_path) {
   }
   invisible(list(repo_patched = repo_patched, sha_pinned = sha_pinned))
 }
+
+normalize_bundle_path <- function(rel) {
+  p <- gsub("\\\\", "/", rel)
+  p <- sub("^\\.\\./", "", p)
+  gsub("/+", "/", p)
+}
+
+patch_manifest_files <- function(manifest_path, app_dir, app_files) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("jsonlite is required.", call. = FALSE)
+  }
+  if (!requireNamespace("rsconnect", quietly = TRUE)) {
+    stop("rsconnect is required.", call. = FALSE)
+  }
+  manifest <- jsonlite::fromJSON(manifest_path, simplifyVector = FALSE)
+  deployed <- rsconnect::listDeploymentFiles(appDir = app_dir, appFiles = app_files)
+  files <- list()
+  for (rel in deployed) {
+    abs_path <- normalizePath(file.path(app_dir, rel), winslash = "/", mustWork = FALSE)
+    if (!file.exists(abs_path)) {
+      stop("Deployment file not found: ", abs_path, call. = FALSE)
+    }
+    bundle_path <- normalize_bundle_path(rel)
+    files[[bundle_path]] <- list(checksum = unname(rsconnect:::fileMD5(abs_path)))
+  }
+  manifest$files <- files
+  jsonlite::write_json(
+    manifest,
+    manifest_path,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    null = "null"
+  )
+  cat("Bundled", length(files), "files in manifest.\n")
+  invisible(files)
+}
+
+bundle_staged_path <- function(rel, app_primary_doc, app_mode) {
+  rel_norm <- normalize_bundle_path(rel)
+  if (!is.null(app_primary_doc) &&
+      identical(app_mode, "shiny") &&
+      tolower(tools::file_ext(app_primary_doc)) == "r" &&
+      identical(rel_norm, normalize_bundle_path(app_primary_doc))) {
+    return("app.R")
+  }
+  rel_norm
+}
+
+refresh_manifest_bundle_checksums <- function(
+  manifest_path,
+  app_dir,
+  app_primary_doc = NULL,
+  app_mode = "shiny"
+) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("jsonlite is required.", call. = FALSE)
+  }
+  if (!requireNamespace("rsconnect", quietly = TRUE)) {
+    stop("rsconnect is required.", call. = FALSE)
+  }
+  manifest <- jsonlite::fromJSON(manifest_path, simplifyVector = FALSE)
+  rel_files <- names(manifest$files)
+  if (length(rel_files) == 0L) {
+    stop("Manifest has no files.", call. = FALSE)
+  }
+  bundle_dir <- rsconnect:::bundleAppDir(
+    appDir = app_dir,
+    appFiles = rel_files,
+    appPrimaryDoc = app_primary_doc,
+    appMode = app_mode
+  )
+  on.exit(unlink(bundle_dir, recursive = TRUE), add = TRUE)
+  for (rel in rel_files) {
+    staged <- file.path(bundle_dir, bundle_staged_path(rel, app_primary_doc, app_mode))
+    if (!file.exists(staged)) {
+      stop("Bundled file missing after staging: ", staged, call. = FALSE)
+    }
+    manifest$files[[rel]]$checksum <- unname(rsconnect:::fileMD5(staged))
+  }
+  jsonlite::write_json(
+    manifest,
+    manifest_path,
+    auto_unbox = TRUE,
+    pretty = TRUE,
+    null = "null"
+  )
+  cat("Refreshed checksums for", length(rel_files), "bundled files.\n")
+  invisible(manifest$files)
+}

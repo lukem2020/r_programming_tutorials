@@ -17,7 +17,9 @@ deploy:
   smoke_test: true
 
   log_level: normal
-  force_update: false
+  # Default true in deploy_app.R (non-interactive updates). Set false to block
+  # overwriting an existing app name without confirmation.
+  force_update: true
 
   # rsconnect 1.10+ uses renv.lock on the server when packageRepositoryResolutionR
   # is "lockfile" (set in deploy_app.R). Match renv.lock R version if needed.
@@ -29,15 +31,16 @@ deploy:
 
   # Default bundles when app_files is null:
   #
-  # teal (app_teal/):
+  # teal (project root; primary doc app.R is a deploy-time copy of app_teal/app.R):
   #   - app.R
-  #   - ../R/
-  #   - ../config/study_config.yml
-  #   - ../config/tlg_registry.yml
-  #   - ../config/dataset_inventory.yml
-  #   - ../data/adam/
-  #   - ../renv.lock
-  #   - ../.Rprofile
+  #   - app_teal/app.R
+  #   - R/
+  #   - config/study_config.yml
+  #   - config/tlg_registry.yml
+  #   - config/dataset_inventory.yml
+  #   - data/adam/
+  #   - renv.lock
+  #   - .Rprofile
   #
   # legacy (project root app.R):
   #   - app.R, R/, config/study_config.yml, data/adam/, renv.lock, .Rprofile

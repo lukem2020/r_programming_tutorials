@@ -4,12 +4,19 @@
 .root <- local({
   d <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)
   repeat {
-    if (file.exists(file.path(d, "config", "study_config.yml"))) break
+    if (file.exists(file.path(d, "config", "study_config.yml"))) {
+      return(d)
+    }
     p <- dirname(d)
-    if (identical(p, d)) break
+    if (identical(p, d)) {
+      break
+    }
     d <- p
   }
-  d
+  stop(
+    "Cannot find config/study_config.yml from working directory: ", getwd(),
+    call. = FALSE
+  )
 })
 
 for (f in c(

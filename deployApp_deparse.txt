@@ -1,0 +1,307 @@
+{
+    check_string(appDir)
+    check_directory(appDir)
+    appDir <- normalizePath(appDir)
+    dependencyResolution <- match.arg(dependencyResolution)
+    check_string(appName, allow_null = TRUE)
+    if (!is.null(appPrimaryDoc)) {
+        check_string(appPrimaryDoc)
+        if (!file.exists(file.path(appDir, appPrimaryDoc))) {
+            cli::cli_abort("`appPrimaryDoc` not found inside `appDir`")
+        }
+    }
+    check_character(envVars, allow_null = TRUE)
+    if (!is.null(envVars) && !is.null(names(envVars))) {
+        cli::cli_abort(c("{.arg envVars} must be a character vector containing only environment variable {.strong names}.", 
+            i = "Set environment variables with `Sys.setenv() or an `.Renviron` file.", 
+            i = "Use {.fn unname} to remove the names from the vector passed to {.arg envVars}."))
+    }
+    if (!is.null(appSourceDoc)) {
+        recordDir <- appSourceDoc
+    }
+    logLevel <- match.arg(logLevel)
+    quiet <- identical(logLevel, "quiet")
+    verbose <- identical(logLevel, "verbose")
+    logger <- verboseLogger(verbose)
+    displayStatus <- displayStatus(quiet)
+    runStartupScripts(appDir, quiet = quiet, verbose = verbose)
+    if (verbose) {
+        old_verbose <- options(rsconnect.http.trace = TRUE, rsconnect.http.trace.json = TRUE, 
+            rsconnect.error.trace = TRUE)
+        defer(options(old_verbose))
+    }
+    if (isTRUE(getOption("rsconnect.error.trace"))) {
+        old_error <- options(error = function(e) {
+            cat("----- Deployment error -----\n")
+            cat(geterrmessage(), "\n")
+            cat("----- Error stack trace -----\n")
+            traceback(x = sys.calls(), max.lines = 3)
+        })
+        defer(options(old_error))
+    }
+    if (verbose) {
+        logger("Deployment log started")
+        cat("Deploy command:", "\n", deparse(sys.call(1)), "\n\n")
+        cat("Session information: \n")
+        print(utils::sessionInfo())
+    }
+    runDeploymentHook(appDir, "rsconnect.pre.deploy", verbose = verbose)
+    if (!is.null(manifestPath)) {
+        if (!file.exists(manifestPath)) {
+            manifestPath <- file.path(appDir, manifestPath)
+        }
+        if (!file.exists(manifestPath)) {
+            cli::cli_abort(c("Manifest file not found.", x = "Could not find {.file {manifestPath}}.", 
+                i = "Create a manifest with {.fn writeManifest} first."))
+        }
+        manifest <- tryCatch(jsonlite::read_json(manifestPath, 
+            simplifyVector = FALSE), error = function(e) {
+            cli::cli_abort(c("Failed to parse manifest file.", 
+                x = "Error reading {.file {manifestPath}}: {e$message}"))
+        })
+        if (is.null(manifest$metadata$appmode)) {
+            cli::cli_abort(c("Invalid manifest file.", x = "Manifest must contain {.field metadata$appmode}."))
+        }
+        appFiles <- names(manifest$files)
+        if (length(appFiles) == 0) {
+            cli::cli_abort(c("Invalid manifest file.", x = "Manifest contains no files."))
+        }
+        missingFiles <- c()
+        for (file in appFiles) {
+            if (!file.exists(file.path(appDir, file))) {
+                missingFiles <- c(missingFiles, file)
+            }
+        }
+        if (length(missingFiles) > 0) {
+            cli::cli_abort(c("Files listed in manifest are missing from {.arg appDir}.", 
+                x = "Missing files: {.file {missingFiles}}"))
+        }
+        appMode <- manifest$metadata$appmode
+        appPrimaryDoc <- manifest$metadata$primary_rmd
+        if (identical(appPrimaryDoc, NA) || is.null(appPrimaryDoc)) {
+            appPrimaryDoc <- manifest$metadata$primary_html
+        }
+        if (identical(appPrimaryDoc, NA)) {
+            appPrimaryDoc <- NULL
+        }
+        manifestCategory <- manifest$metadata$content_category
+        if (!identical(manifestCategory, NA) && !is.null(manifestCategory)) {
+            contentCategory <- manifestCategory
+        }
+    }
+    else {
+        appFiles <- listDeploymentFiles(appDir, appFiles, appFileManifest)
+        manifest <- NULL
+    }
+    if (isTRUE(lint)) {
+        lintResults <- lint(appDir, appFiles, appPrimaryDoc)
+        showLintResults(appDir, lintResults)
+    }
+    if (!quiet) {
+        cli::cli_rule("Preparing for deployment")
+    }
+    forceUpdate <- forceUpdate %||% getOption("rsconnect.force.update.apps") %||% 
+        fromIDE()
+    recordPath <- findRecordPath(appDir, recordDir, appPrimaryDoc)
+    target <- findDeploymentTarget(recordPath = recordPath, appId = appId, 
+        appName = appName, appTitle = appTitle, envVars = envVars, 
+        account = account, server = server, forceUpdate = forceUpdate)
+    accountDetails <- target$accountDetails
+    deployment <- target$deployment
+    if (is.null(deployment$appId)) {
+        dest <- accountLabel(accountDetails$name, accountDetails$server)
+        taskComplete(quiet, "Deploying {.val {deployment$name}} using {.val {dest}}")
+    }
+    else {
+        dest <- accountLabel(accountDetails$name, accountDetails$server)
+        taskComplete(quiet, "Re-deploying {.val {deployment$name}} using {.val {dest}}")
+    }
+    if (isConnectServer(accountDetails$server) && identical(upload, 
+        FALSE)) {
+        stop("Posit Connect does not support deploying without uploading. ", 
+            "Specify upload=TRUE to upload and re-deploy your application.")
+    }
+    client <- clientForAccount(accountDetails)
+    if (!serverSupportsEnvVars(accountDetails$server, client) && 
+        length(envVars) > 0) {
+        cli::cli_abort("{accountDetails$server} does not support setting {.arg envVars}")
+    }
+    if (verbose) {
+        showCookies(serverInfo(accountDetails$server)$url)
+    }
+    isShinyappsServer <- isShinyappsServer(accountDetails$server)
+    logger("Inferring App mode and parameters")
+    appMetadata <- appMetadata(appDir = appDir, appFiles = appFiles, 
+        appPrimaryDoc = appPrimaryDoc, quarto = quarto, appMode = appMode, 
+        contentCategory = contentCategory, isShinyappsServer = isShinyappsServer, 
+        metadata = metadata)
+    if (appMetadata$appMode == "nodejs") {
+        if (isShinyappsServer(accountDetails$server)) {
+            cli::cli_abort("Node.js content is not supported on shinyapps.io.")
+        }
+        if (isPositConnectCloudServer(accountDetails$server)) {
+            cli::cli_abort("Node.js content is not supported on Posit Connect Cloud.")
+        }
+        checkConnectSupportsNodejs(client)
+    }
+    if (is.null(deployment$appId)) {
+        taskStart(quiet, "Creating content on server...")
+        if (isPositConnectCloudServer(accountDetails$server)) {
+            primaryFile <- appMetadata$appPrimaryDoc %||% appMetadata$inferredPrimaryFile
+            application <- client$createContent(deployment$name, 
+                deployment$title, accountDetails$accountId, appMetadata$appMode, 
+                primaryFile, deployment$envVars)
+        }
+        else {
+            application <- client$createApplication(deployment$name, 
+                deployment$title, "shiny", accountDetails$accountId, 
+                appMetadata$appMode, contentCategory)
+        }
+        taskComplete(quiet, "Created content with id {.val {application$id}}")
+    }
+    else {
+        if (isPositConnectCloudServer(accountDetails$server)) {
+            taskStart(quiet, "Looking up content with id {.val {deployment$appId}}...")
+            application <- tryCatch({
+                application <- client$getContent(deployment$appId)
+                taskComplete(quiet, "Found content")
+                application
+            }, rsconnect_http_404 = function(err) {
+                application <- applicationDeleted(client, deployment, 
+                  recordPath, appMetadata)
+                taskComplete(quiet, "Created content with id {.val {application$id}}")
+                application
+            })
+        }
+        else {
+            taskStart(quiet, "Looking up content with id {.val {deployment$appId}}...")
+            application <- tryCatch({
+                application <- client$getApplication(deployment$appId, 
+                  deployment$version)
+                taskComplete(quiet, "Found content {.url {application$url}}")
+                application
+            }, rsconnect_http_404 = function(err) {
+                application <- applicationDeleted(client, deployment, 
+                  recordPath, appMetadata)
+                taskComplete(quiet, "Created content with id {.val {application$id}}")
+                application
+            })
+        }
+    }
+    saveDeployment(recordPath, deployment = deployment, application = application, 
+        metadata = metadata)
+    if (isPositConnectCloudServer(accountDetails$server)) {
+        if (!is.null(application$current_revision)) {
+            taskStart(quiet, "Updating content...")
+            primaryFile <- appMetadata$appPrimaryDoc %||% appMetadata$inferredPrimaryFile
+            application <- client$updateContent(application$id, 
+                deployment$envVars, newBundle = upload, primaryFile, 
+                appMetadata$appMode)
+            taskComplete(quiet, "Content updated")
+        }
+    }
+    else {
+        if (needsVisibilityChange(accountDetails$server, application, 
+            appVisibility)) {
+            taskStart(quiet, "Setting visibility to {appVisibility}...")
+            client$setApplicationProperty(application$id, "application.visibility", 
+                appVisibility)
+            taskComplete(quiet, "Visibility updated")
+        }
+        if (length(deployment$envVars) > 0) {
+            taskStart(quiet, "Updating environment variables {envVars}...")
+            client$setEnvVars(application$guid, deployment$envVars)
+            taskComplete(quiet, "Environment variables updated")
+        }
+    }
+    if (upload) {
+        python <- getPythonForTarget(python, accountDetails)
+        pythonConfig <- pythonConfigurator(python, forceGeneratePythonEnvironment)
+        if (dependencyResolution == "library") {
+            confirmDependencySourceLibrary()
+        }
+        taskStart(quiet, "Bundling {length(appFiles)} file{?s}: {.file {appFiles}}")
+        bundlePath <- bundleApp(appName = deployment$name, appDir = appDir, 
+            appFiles = appFiles, appMetadata = appMetadata, quiet = quiet, 
+            verbose = verbose, pythonConfig = pythonConfig, image = image, 
+            envManagement = envManagement, envManagementR = envManagementR, 
+            envManagementPy = envManagementPy, envManagementNodejs = envManagementNodejs, 
+            packageRepositoryResolutionR = packageRepositoryResolutionR, 
+            dependencyResolution = dependencyResolution, existingManifest = manifest)
+        size <- format(file_size(bundlePath), big.mark = ",")
+        taskComplete(quiet, "Created bundle of size: {size}b")
+        taskStart(quiet, "Uploading bundle...")
+        if (isPositConnectCloudServer(accountDetails$server)) {
+            uploadUrl <- application$next_revision$source_bundle_upload_url
+            success <- client$uploadBundle(bundlePath, uploadUrl)
+            if (!success) {
+                cli::cli_abort("Could not upload bundle.")
+            }
+            bundle <- NULL
+        }
+        else if (isShinyappsServer(accountDetails$server)) {
+            bundle <- uploadShinyappsBundle(client, application$application_id, 
+                bundlePath)
+        }
+        else {
+            bundle <- client$uploadBundle(application$guid, bundlePath)
+        }
+        if (isPositConnectCloudServer(accountDetails$server)) {
+            taskComplete(quiet, "Uploaded bundle")
+        }
+        else {
+            taskComplete(quiet, "Uploaded bundle with id {.val {bundle$id}}")
+        }
+        saveDeployment(recordPath, deployment = deployment, application = application, 
+            bundleId = bundle$id, metadata = metadata)
+    }
+    else {
+        if (isShinyappsServer(accountDetails$server)) {
+            bundle <- application$deployment$bundle
+        }
+    }
+    if (!quiet) {
+        cli::cli_rule("Deploying to server")
+    }
+    if (isPositConnectCloudServer(accountDetails$server)) {
+        client$publish(application$id)
+        revisionId <- application$next_revision$id
+        response <- client$awaitCompletion(revisionId)
+        deploymentSucceeded <- response$success
+        application$url <- response$url
+        saveDeployment(recordPath, deployment = deployment, application = application, 
+            bundleId = bundle$id, metadata = metadata)
+    }
+    else {
+        task <- client$deployApplication(application, bundle$id)
+        taskId <- if (is.null(task$task_id)) 
+            task$id
+        else task$task_id
+        response <- client$waitForTask(taskId, quiet)
+    }
+    if (!quiet) {
+        cli::cli_rule("Deployment complete")
+    }
+    Sys.sleep(0.1)
+    if (!isPositConnectCloudServer(accountDetails$server)) {
+        deploymentSucceeded <- is.null(response$code) || response$code == 
+            0
+    }
+    if (!quiet) {
+        if (deploymentSucceeded) {
+            cli::cli_alert_success("Successfully deployed to {.url {application$url}}")
+        }
+        else {
+            cli::cli_alert_danger("Deployment failed with error: {response$error}")
+        }
+    }
+    if (!quiet) {
+        openURL(client, application, accountDetails$server, launch.browser, 
+            on.failure, deploymentSucceeded)
+    }
+    if (deploymentSucceeded) {
+        runDeploymentHook(appDir, "rsconnect.post.deploy", verbose = verbose)
+    }
+    logger("Deployment log finished")
+    invisible(deploymentSucceeded)
+}
