@@ -1,5 +1,5 @@
 study_id: CDISCPILOT01
-updated: 2026-06-15 13:34:02.681405
+updated: 2026-06-16 15:34:55.059699
 datasets:
 - name: ADSL
   path: data/adam/ADSL.rds
@@ -33,6 +33,11 @@ datasets:
   path: data/adam/ADTTE.rds
   available: yes
   rows: 504
+- name: ADQS
+  path: data/adam/ADQS.rds
+  available: yes
+  rows: 7426
+  source: Derived from ADVS Week 12 change scores for AOVT01
 - name: ADEG
   path: data/adam/ADEG.rds
   available: yes
@@ -53,7 +58,3 @@ datasets:
   available: yes
   rows: 2688
   source: pharmaverseadam (study-aligned subset)
-- name: ADQS
-  available: no
-  rows: 0
-  note: Not available for CDISCPILOT01 in current pipeline

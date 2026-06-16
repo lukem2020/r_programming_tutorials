@@ -5,9 +5,9 @@ suppressPackageStartupMessages(library(yaml))
 
 # Phase 1 TLGs with runnable implementations on CDISCPILOT01 safety ADaM.
 PHASE1_CODES <- c(
-  "DMT01", "DST01", "EXT01", "AET01", "AET02", "AET03", "AET10",
-  "LBT01", "LBT04", "LBT09", "VST01", "CMT01A",
-  "AEL03", "CML01", "EXL01", "LBL01", "MHL01",
+  "DMT01", "EXT01", "AET01", "AET02", "AET03", "AET10",
+  "LBT01", "LBT04", "VST01", "CMT01A",
+  "AEL03", "CML01", "EXL01", "LBL01", "LBL02A_RLS", "AOVT01", "COXT01", "MHL01",
   "KMG01", "TTET01", "IPPG01", "LTG01"
 )
 
@@ -51,6 +51,9 @@ TEAL_FN <- list(
   CML01 = "tm_t_listings",
   EXL01 = "tm_t_listings",
   LBL01 = "tm_t_listings",
+  LBL02A_RLS = "rlistings_listing",
+  AOVT01 = "tm_t_ancova",
+  COXT01 = "tm_t_coxreg",
   MHL01 = "tm_t_listings",
   KMG01 = "tm_g_km",
   TTET01 = "tm_t_tte",
@@ -64,6 +67,9 @@ STUDY_DATASETS <- c("ADSL", "ADAE", "ADLB", "ADEX", "ADVS", "ADCM", "ADMH", "ADT
 CODE_DATASETS <- list(
   TTET01 = c("ADSL", "ADTTE"),
   KMG01 = c("ADSL", "ADTTE"),
+  COXT01 = c("ADSL", "ADTTE"),
+  COXT02 = c("ADSL", "ADTTE"),
+  AOVT01 = c("ADSL", "ADQS"),
   IPPG01 = c("ADSL", "ADAE", "ADLB", "ADVS", "ADCM", "ADMH"),
   LTG01 = c("ADSL", "ADLB")
 )

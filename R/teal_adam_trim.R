@@ -12,7 +12,7 @@ TEAL_DATASET_COLUMNS <- list(
   ),
   ADLB = c(
     "STUDYID", "USUBJID", "ARM", "SAFFL", "PARAM", "PARAMCD", "LBCAT", "AVAL", "AVALU",
-    "BASE", "CHG", "ANRIND", "BNRIND", "ABLFL", "ONTRTFL", "AVISIT", "AVISITN", "ADY",
+    "BASE", "CHG", "PCHG", "ANRIND", "BNRIND", "ABLFL", "ONTRTFL", "AVISIT", "AVISITN", "ADY",
     "ANRLO", "ANRHI"
   ),
   ADVS = c(
@@ -30,8 +30,12 @@ TEAL_DATASET_COLUMNS <- list(
   ),
   ADMH = c("STUDYID", "USUBJID", "ARM", "MHTERM", "MHBODSYS", "MHSTDY", "MHOCCUR"),
   ADTTE = c(
-    "STUDYID", "USUBJID", "ARM", "SAFFL", "PARAMCD", "PARAM", "AVAL", "AVALU", "CNSR",
-    "STARTDT", "EVNTDESC", "CNSDTDSC"
+    "STUDYID", "USUBJID", "ARM", "ARMCD", "SAFFL", "PARAMCD", "PARAM", "AVAL", "AVALU", "CNSR",
+    "STARTDT", "EVNTDESC", "CNSDTDSC", "AGE", "RACE", "SEX", "AGEGR1"
+  ),
+  ADQS = c(
+    "STUDYID", "USUBJID", "ARM", "ARMCD", "PARAM", "PARAMCD", "AVISIT", "AVAL", "BASE",
+    "CHG", "STRATA1"
   )
 )
 
@@ -126,8 +130,17 @@ prep_teal_arm_factor <- function(df, cfg) {
   df
 }
 
+normalize_teal_arm_levels <- function(df, cfg) {
+  if (is.null(df)) return(df)
+  arms <- unlist(cfg$display$arm_levels, use.names = FALSE)
+  if ("ARM" %in% names(df)) df$ARM <- factor(as.character(df$ARM), levels = arms)
+  if ("ACTARM" %in% names(df)) df$ACTARM <- factor(as.character(df$ACTARM), levels = arms)
+  df
+}
+
 abnormality_na_level <- function() {
-  if (requireNamespace("tern", quietly = TRUE)) tern::default_na_str() else "<Missing>"
+  lvl <- if (requireNamespace("tern", quietly = TRUE)) tern::default_na_str() else "<Missing>"
+  if (length(lvl) == 0L || is.na(lvl) || !nzchar(lvl)) "<Missing>" else lvl
 }
 
 filter_abnormality_records <- function(df) {
@@ -135,16 +148,19 @@ filter_abnormality_records <- function(df) {
   na_lvl <- abnormality_na_level()
   keep <- rep(TRUE, nrow(df))
   if ("ONTRTFL" %in% names(df)) {
-    keep <- keep & !is.na(df$ONTRTFL) & df$ONTRTFL == "Y"
+    ontrt <- as.character(df$ONTRTFL)
+    cond <- !is.na(ontrt) & ontrt == "Y"
+    cond[is.na(cond)] <- FALSE
+    keep <- keep & cond
   }
   for (v in c("ANRIND", "PARAM", "LBCAT")) {
     if (!v %in% names(df)) next
-    col <- df[[v]]
-    keep <- keep & !is.na(col)
-    if (is.factor(col) || is.character(col)) {
-      keep <- keep & col != na_lvl
-    }
+    col <- as.character(df[[v]])
+    cond <- !is.na(col) & col != na_lvl
+    cond[is.na(cond)] <- FALSE
+    keep <- keep & cond
   }
+  keep[is.na(keep)] <- FALSE
   df[keep, , drop = FALSE]
 }
 
@@ -182,6 +198,7 @@ adlb_tern_chars <- function(adlb) {
     names(adlb)
   )
   if (length(cols) == 0L) return(adlb)
+  for (col in cols) adlb[[col]] <- as.character(adlb[[col]])
   tern::df_explicit_na(adlb, omit_columns = setdiff(names(adlb), cols))
 }
 
@@ -192,6 +209,7 @@ adsl_tern_chars <- function(adsl) {
     names(adsl)
   )
   if (length(cols) == 0L) return(adsl)
+  for (col in cols) adsl[[col]] <- as.character(adsl[[col]])
   tern::df_explicit_na(adsl, omit_columns = setdiff(names(adsl), cols))
 }
 
@@ -200,6 +218,7 @@ trim_adsl_for_teal <- function(adsl, cfg) {
   adsl <- prep_teal_arm_factor(adsl, cfg)
   adsl <- trim_teal_columns(adsl, "ADSL")
   adsl_tern_chars(adsl)
+  normalize_teal_arm_levels(adsl, cfg)
 }
 
 trim_adlb_for_teal <- function(adlb, cfg) {
@@ -212,6 +231,7 @@ trim_adlb_for_teal <- function(adlb, cfg) {
   adlb <- prep_teal_arm_factor(adlb, cfg)
   adlb <- trim_teal_columns(adlb, "ADLB")
   adlb <- adlb_tern_chars(adlb)
+  adlb <- normalize_teal_arm_levels(adlb, cfg)
   order_avisit_factor(adlb)
 }
 
@@ -222,7 +242,27 @@ trim_advs_for_teal <- function(advs, cfg) {
     advs <- advs[advs$PARAM %in% params, , drop = FALSE]
   }
   advs <- filter_scheduled_visits(advs, cfg)
+  advs <- normalize_teal_arm_levels(advs, cfg)
   trim_teal_columns(order_avisit_factor(add_bds_avalu(advs)), "ADVS")
+}
+
+merge_adtte_demographics <- function(adtte, adsl) {
+  if (is.null(adtte) || nrow(adtte) == 0L || is.null(adsl) || nrow(adsl) == 0L) {
+    return(adtte)
+  }
+  demo_cols <- intersect(c("ARMCD", "AGE", "RACE", "SEX", "AGEGR1"), names(adsl))
+  if (length(demo_cols) == 0L) return(adtte)
+
+  sl <- adsl[, c("USUBJID", demo_cols), drop = FALSE]
+  sl$USUBJID <- as.character(sl$USUBJID)
+  adtte$USUBJID <- as.character(adtte$USUBJID)
+  drop_demo <- intersect(demo_cols, names(adtte))
+  if (length(drop_demo) > 0L) {
+    adtte <- adtte[, setdiff(names(adtte), drop_demo), drop = FALSE]
+  }
+  out <- merge(adtte, sl, by = "USUBJID", all.x = TRUE)
+  row.names(out) <- NULL
+  out
 }
 
 prep_adcm_for_teal <- function(adcm) {
@@ -236,12 +276,30 @@ trim_adcm_for_teal <- function(adcm, cfg) {
   if (is.null(adcm)) return(NULL)
   adcm <- prep_teal_arm_factor(adcm, cfg)
   adcm <- prep_adcm_for_teal(adcm)
+  adcm <- normalize_teal_arm_levels(adcm, cfg)
   trim_teal_columns(adcm, "ADCM")
 }
 
 trim_adex_for_teal <- function(adex, cfg) {
   if (is.null(adex)) return(NULL)
   trim_teal_columns(prep_adex_for_teal(adex), "ADEX")
+}
+
+adqs_tern_chars <- function(adqs) {
+  if (is.null(adqs) || !requireNamespace("tern", quietly = TRUE)) return(adqs)
+  # Keep STRATA1 as a plain covariate for summarize_ancova().
+  cols <- intersect(c("ARM", "ARMCD", "PARAMCD", "AVISIT"), names(adqs))
+  if (length(cols) == 0L) return(adqs)
+  for (col in cols) adqs[[col]] <- as.character(adqs[[col]])
+  tern::df_explicit_na(adqs, omit_columns = setdiff(names(adqs), cols))
+}
+
+trim_adqs_for_teal <- function(adqs, cfg) {
+  if (is.null(adqs)) return(NULL)
+  adqs <- prep_teal_arm_factor(adqs, cfg)
+  adqs <- trim_teal_columns(adqs, "ADQS")
+  adqs <- adqs_tern_chars(adqs)
+  normalize_teal_arm_levels(adqs, cfg)
 }
 
 trim_teal_dataset <- function(df, dataname, cfg) {
@@ -252,6 +310,7 @@ trim_teal_dataset <- function(df, dataname, cfg) {
     ADVS = trim_advs_for_teal(df, cfg),
     ADCM = trim_adcm_for_teal(df, cfg),
     ADEX = trim_adex_for_teal(df, cfg),
+    ADQS = trim_adqs_for_teal(df, cfg),
     trim_teal_columns(df, dataname)
   )
 }

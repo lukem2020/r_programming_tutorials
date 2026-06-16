@@ -137,16 +137,26 @@ Rscript programs/03_smoke_test.R
 
 ### Deploy (shinyapps.io)
 
+Prepare teal data, then deploy the TLG Catalog app (`app_teal/`):
+
 ```bash
 # 1. Copy the template and add your account / token / secret
 cp config/deploy.example.yml config/deploy.yml
 # Edit config/deploy.yml (file is gitignored — do not commit secrets)
+# Set deploy.app: teal  and  shinyapps.app_name: xanomeline-tlg-teal
 
-# 2. Deploy using credentials from config/deploy.yml
+# 2. Prepare ADaM + registry artifacts bundled with the app
+Rscript programs/04_prepare_teal_adam.R
+
+# 3. Deploy (runs programs/05_smoke_test_teal.R first)
 Rscript deploy_app.R
 ```
 
+To deploy the legacy MDR Safety Dashboard instead, set `deploy.app: legacy` and a distinct `shinyapps.app_name` in `config/deploy.yml`.
+
 Public URL: `https://<account>.shinyapps.io/<app_name>/`
+
+**Note:** The teal app loads ~22 modules and trimmed ADaM (~83k ADLB rows). Use a shinyapps.io instance size with sufficient memory (Starter or higher).
 
 ### Inspect the data (Python notebook)
 

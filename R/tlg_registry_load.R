@@ -77,7 +77,7 @@ is_phase1_entry <- function(entry, registry) {
   entry$code %in% unlist(registry$phase1_codes, use.names = FALSE)
 }
 
-TLG_TERN_IMPLEMENTED <- c("DMT01", "DST01", "LBT09")
+TLG_TERN_IMPLEMENTED <- c("DMT01")
 
 entry_is_runnable <- function(entry, registry) {
   if (identical(entry$implementation, "tern_layout")) {

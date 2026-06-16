@@ -4,17 +4,40 @@
 # Get credentials: https://www.shinyapps.io/ → Account → Tokens
 
 shinyapps:
-  account: "61nbmw-luke-meyer"
-  token: "1703FA508D54EC785AC1AD03D8E2C8CB"
-  secret: "ZZfGxYHXzeyUrLBXTPfvpuqfjYuvA3BSQ2rjC+mT"
-  app_name: "mdr-safety-dashboard"
+  account: "your-shinyapps-account"
+  token: "PASTE_TOKEN"
+  secret: "PASTE_SECRET"
+  app_name: "xanomeline-tlg-teal"
 
 deploy:
-  # Files bundled into the shinyapps.io deployment (do not include deploy.yml).
-  app_files:
-    - app.R
-    - R/
-    - config/study_config.yml
-    - data/adam/
-    - renv.lock
-    - .Rprofile
+  # Which Shiny app to publish: teal (TLG Catalog) or legacy (MDR Safety Dashboard).
+  app: teal
+
+  # Run a smoke test before upload (recommended).
+  smoke_test: true
+
+  log_level: normal
+  force_update: false
+
+  # rsconnect 1.10+ uses renv.lock on the server when packageRepositoryResolutionR
+  # is "lockfile" (set in deploy_app.R). Match renv.lock R version if needed.
+  r_version: "4.6.0"
+
+  # Optional: override bundled files (paths relative to app directory).
+  # Leave null to use defaults for the selected app target.
+  app_files: null
+
+  # Default bundles when app_files is null:
+  #
+  # teal (app_teal/):
+  #   - app.R
+  #   - ../R/
+  #   - ../config/study_config.yml
+  #   - ../config/tlg_registry.yml
+  #   - ../config/dataset_inventory.yml
+  #   - ../data/adam/
+  #   - ../renv.lock
+  #   - ../.Rprofile
+  #
+  # legacy (project root app.R):
+  #   - app.R, R/, config/study_config.yml, data/adam/, renv.lock, .Rprofile

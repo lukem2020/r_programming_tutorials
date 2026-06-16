@@ -23,6 +23,94 @@ bds_y_unit <- function(dataname) {
   )
 }
 
+tlg_lbl02a_rls_module <- function(entry) {
+  label <- tlg_module_label(entry)
+  teal::module(
+    label = label,
+    server = function(id, data, ...) {
+      shiny::moduleServer(id, function(input, output, session) {
+        patient_choices <- shiny::reactive({
+          lbl02a_rls_patient_choices(data()[["ADLB"]])
+        })
+
+        shiny::observe({
+          ch <- patient_choices()
+          choices <- c("All patients" = "", ch)
+          sel <- shiny::isolate(input$patient)
+          if (is.null(sel) || !nzchar(sel) || !sel %in% unname(choices)) {
+            sel <- ""
+          }
+          shiny::updateSelectizeInput(session, "patient", choices = choices, selected = sel)
+        })
+
+        output$lst <- shiny::renderUI({
+          df <- data()[["ADLB"]]
+          pid <- input$patient
+          if (is.null(pid) || !nzchar(pid)) pid <- NULL
+          lst <- build_lbl02a_rls_listing(df, usubjid = pid)
+          shiny::tags$div(
+            style = "overflow-x: auto;",
+            shiny::tags$pre(
+              style = "white-space: pre; font-size: 11px; font-family: monospace;",
+              rlistings::export_as_txt(lst, paginate = FALSE)
+            )
+          )
+        })
+      })
+    },
+    ui = function(id, ...) {
+      ns <- shiny::NS(id)
+      shiny::tagList(
+        shiny::h4(label),
+        shiny::fluidRow(
+          shiny::column(
+            4,
+            shiny::selectizeInput(
+              ns("patient"),
+              "Search patient (Center/Patient ID):",
+              choices = c("All patients" = ""),
+              selected = "",
+              options = list(
+                placeholder = "Type to search a patient...",
+                maxOptions = 500
+              )
+            )
+          )
+        ),
+        shiny::uiOutput(ns("lst"))
+      )
+    },
+    datanames = "ADLB"
+  )
+}
+
+tlg_rlistings_module <- function(entry, dataname, build_listing_fun) {
+  label <- tlg_module_label(entry)
+  teal::module(
+    label = label,
+    server = function(id, data, ...) {
+      shiny::moduleServer(id, function(input, output, session) {
+        output$lst <- shiny::renderUI({
+          df <- data()[[dataname]]
+          lst <- build_listing_fun(df)
+          shiny::tags$div(
+            style = "overflow-x: auto;",
+            shiny::tags$pre(
+              style = "white-space: pre; font-size: 11px; font-family: monospace;",
+              rlistings::export_as_txt(lst, paginate = FALSE)
+            )
+          )
+        })
+      })
+    },
+    ui = function(id, ...) {
+      ns <- shiny::NS(id)
+      shiny::tagList(shiny::h4(label), shiny::uiOutput(ns("lst")))
+    },
+    datanames = dataname
+  )
+}
+
 tlg_listing_module <- function(entry, dataname, cols, filter_fun = NULL) {
   label <- tlg_module_label(entry)
   teal::module(
@@ -205,6 +293,62 @@ tlg_teal_module <- function(entry, cfg) {
     LBL01 = tlg_listing_module(
       entry, "ADLB",
       c("USUBJID", "ARM", "PARAM", "AVISIT", "AVAL", "CHG", "ANRIND")
+    ),
+    LBL02A_RLS = tlg_lbl02a_rls_module(entry),
+    AOVT01 = teal.modules.clinical::tm_t_ancova(
+      label = label,
+      dataname = "ADQS",
+      avisit = teal.transform::choices_selected(
+        teal.transform::value_choices("ADQS", "AVISIT"),
+        "Week 12"
+      ),
+      arm_var = arm,
+      aval_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADQS", subset = c("CHG", "AVAL")),
+        "CHG"
+      ),
+      cov_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADQS", c("BASE", "STRATA1")),
+        c("BASE", "STRATA1")
+      ),
+      paramcd = teal.transform::choices_selected(
+        teal.transform::value_choices("ADQS", "PARAMCD", "PARAM"),
+        c("SYSBP", "DIABP", "PULSE")
+      ),
+      basic_table_args = teal.widgets::basic_table_args(show_colcounts = TRUE)
+    ),
+    COXT01 = teal.modules.clinical::tm_t_coxreg(
+      label = label,
+      dataname = "ADTTE",
+      parentname = "ADTTE",
+      arm_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", c("ARM", "ARMCD")),
+        "ARM"
+      ),
+      paramcd = teal.transform::choices_selected(
+        teal.transform::value_choices("ADTTE", "PARAMCD", "PARAM"),
+        "TTDE"
+      ),
+      cov_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", c("AGE", "RACE", "SEX", "AGEGR1")),
+        "AGE"
+      ),
+      strata_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", c("SEX", "RACE", "AGEGR1")),
+        "SEX"
+      ),
+      aval_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "AVAL"),
+        "AVAL",
+        fixed = TRUE
+      ),
+      cnsr_var = teal.transform::choices_selected(
+        teal.transform::variable_choices("ADTTE", subset = "CNSR"),
+        "CNSR",
+        fixed = TRUE
+      ),
+      multivariate = FALSE,
+      basic_table_args = teal.widgets::basic_table_args(show_colcounts = TRUE)
     ),
     MHL01 = tlg_listing_module(
       entry, "ADMH",

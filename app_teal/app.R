@@ -14,7 +14,7 @@
 
 for (f in c(
   "load_data.R", "teal_adam_trim.R", "tlg_registry_load.R", "teal_study_data.R",
-  "tlg_unavailable_module.R", "tlg_tern_layouts.R", "tlg_modules.R"
+  "tlg_unavailable_module.R", "tlg_tern_layouts.R", "lbl02a_rls_listing.R", "tlg_modules.R"
 )) {
   source(file.path(.root, "R", f))
 }

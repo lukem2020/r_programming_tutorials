@@ -11,7 +11,6 @@ study_datasets:
 - ADTTE
 phase1_codes:
 - DMT01
-- DST01
 - EXT01
 - AET01
 - AET02
@@ -19,13 +18,15 @@ phase1_codes:
 - AET10
 - LBT01
 - LBT04
-- LBT09
 - VST01
 - CMT01A
 - AEL03
 - CML01
 - EXL01
 - LBL01
+- LBL02A_RLS
+- AOVT01
+- COXT01
 - MHL01
 - KMG01
 - TTET01
@@ -441,9 +442,9 @@ entries:
   required_datasets:
   - ADSL
   - ADQS
-  implementation: unavailable
-  teal_fn: .na.character
-  status: needs_domain
+  implementation: teal_module
+  teal_fn: tm_t_ancova
+  status: ready
 - code: AOVT02
   category: tables
   domain: efficacy
@@ -495,10 +496,10 @@ entries:
   catalog_qmd: tables/efficacy/coxt01.qmd
   required_datasets:
   - ADSL
-  - ADQS
-  implementation: unavailable
-  teal_fn: .na.character
-  status: needs_domain
+  - ADTTE
+  implementation: teal_module
+  teal_fn: tm_t_coxreg
+  status: ready
 - code: COXT02
   category: tables
   domain: efficacy
@@ -1233,9 +1234,9 @@ entries:
   required_datasets:
   - ADSL
   - ADLB
-  implementation: tern_layout
-  teal_fn: .na.character
-  status: needs_derivation
+  implementation: teal_module
+  teal_fn: rlistings_listing
+  status: ready
 - code: LBL02B
   category: listings
   domain: lab-results

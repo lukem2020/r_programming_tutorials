@@ -8,6 +8,8 @@ suppressPackageStartupMessages({
 })
 
 source(file.path("R", "load_data.R"))
+source(file.path("R", "teal_adam_trim.R"))
+source(file.path("R", "derive_adqs.R"))
 
 study_id <- "CDISCPILOT01"
 adam_dir <- file.path("data", "adam")
@@ -16,12 +18,13 @@ dir.create(adam_dir, recursive = TRUE, showWarnings = FALSE)
 cfg <- load_config(".")
 st <- load_study_data(".", cfg)
 
-# Probe pharmaverseadam for optional domains aligned to this study.
-optional_objs <- c("adeg", "adab", "adpc", "adpp", "adqsadas", "adqscibc", "adqsnpix")
+# Optional pharmaverseadam domains present in the installed package (study-aligned subset).
+optional_objs <- c("adeg", "adab", "adpc", "adpp")
 optional_loaded <- list()
 
 if (requireNamespace("pharmaverseadam", quietly = TRUE)) {
-  for (obj in optional_objs) {
+  pkg_data <- utils::data(package = "pharmaverseadam")$results[, "Item"]
+  for (obj in intersect(optional_objs, tolower(pkg_data))) {
     tryCatch({
       data(list = obj, package = "pharmaverseadam")
       x <- get(obj)
@@ -110,7 +113,11 @@ ADVS <- prep_bds(st$ADVS, skip_explicit_na = TRUE)
 ADCM <- prep_adcm(st$ADCM)
 ADEX <- prep_bds(st$ADEX)
 ADMH <- prep_bds(st$ADMH)
-ADTTE <- if (!is.null(st$ADTTE)) prep_bds(st$ADTTE) else NULL
+ADTTE <- if (!is.null(st$ADTTE)) merge_adtte_demographics(prep_bds(st$ADTTE), ADSL) else NULL
+ADQS <- derive_adqs_for_aovt(st$ADVS, st$ADSL %>% filter(.data$SAFFL == "Y"))
+if (nrow(ADQS) > 0L) {
+  ADQS <- ADQS %>% mutate(ARM = factor(.data$ARM, levels = arm_levels))
+}
 
 saveRDS(ADSL, file.path(adam_dir, "ADSL.rds"))
 saveRDS(ADAE, file.path(adam_dir, "ADAE.rds"))
@@ -120,6 +127,7 @@ saveRDS(ADCM, file.path(adam_dir, "ADCM.rds"))
 saveRDS(ADEX, file.path(adam_dir, "ADEX.rds"))
 saveRDS(ADMH, file.path(adam_dir, "ADMH.rds"))
 if (!is.null(ADTTE)) saveRDS(ADTTE, file.path(adam_dir, "ADTTE.rds"))
+if (nrow(ADQS) > 0L) saveRDS(ADQS, file.path(adam_dir, "ADQS.rds"))
 
 cat(" Teal-ready ADaM saved to data/adam/\n")
 
@@ -135,7 +143,10 @@ inventory <- list(
     list(name = "ADEX", path = "data/adam/ADEX.rds", available = TRUE, rows = nrow(ADEX)),
     list(name = "ADMH", path = "data/adam/ADMH.rds", available = TRUE, rows = nrow(ADMH)),
     list(name = "ADTTE", path = "data/adam/ADTTE.rds", available = !is.null(ADTTE),
-         rows = if (!is.null(ADTTE)) nrow(ADTTE) else 0L)
+         rows = if (!is.null(ADTTE)) nrow(ADTTE) else 0L),
+    list(name = "ADQS", path = "data/adam/ADQS.rds", available = nrow(ADQS) > 0L,
+         rows = nrow(ADQS),
+         source = "Derived from ADVS Week 12 change scores for AOVT01")
   )
 )
 
@@ -147,7 +158,7 @@ for (nm in names(optional_loaded)) {
   ))
 }
 
-missing <- c("ADAB", "ADEG", "ADPC", "ADPP", "ADQS")
+missing <- c("ADAB", "ADEG", "ADPC", "ADPP")
 for (nm in missing) {
   if (!nm %in% vapply(inventory$datasets, function(x) x$name, character(1))) {
     inventory$datasets <- c(inventory$datasets, list(
