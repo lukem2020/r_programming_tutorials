@@ -366,6 +366,7 @@ For demo script and Q&A, see [interview_guide.md](interview_guide.md). For role 
 
 | Document | Purpose |
 |----------|---------|
+| [ideal_architecture.md](ideal_architecture.md) | Three-layer app architecture, data contracts, cut refresh, and deployment guide |
 | [interview_guide.md](interview_guide.md) | Demo script and likely interview questions |
 | [methods_cheatsheet.md](methods_cheatsheet.md) | RBQM, CDISC, and MDR terminology |
 | [context_file.md](context_file.md) | Target job description and role requirements |
