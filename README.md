@@ -71,6 +71,7 @@ signal at the skin rather than a hepatic safety concern.
 | [docs/ideal_architecture.md](docs/ideal_architecture.md) | Three-layer app architecture, data contracts, cut refresh, and deployment |
 | [docs/pipeline_overview.md](docs/pipeline_overview.md) | Eight-stage clinical pipeline from collection to medical review |
 | [docs/interview_guide.md](docs/interview_guide.md) | Demo script and interview Q&A |
+| [TLG Catalog resource](https://github.com/insightsengineering/tlg-catalog) | Reference implementation and catalog guidance for safety TLGs |
 
 ---
 
