@@ -1,3 +1,4 @@
+source("renv/activate.R")
 if (file.exists("renv/activate.R")) {
   sys.source("renv/activate.R", envir = globalenv())
 }
